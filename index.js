@@ -87,6 +87,38 @@ app.get('/api/room/:id/zones', (req, res) => {
     });
 });
 
+app.get('/api/model/up', (req, res) => {
+    res.send(apiResponse('Model up command is sent'));
+})
+
+app.get('/api/model/down', (req, res) => {
+    res.send(apiResponse('Model down command is sent'));
+})
+
+app.get('/api/video/play', (req, res) => {
+    res.send(apiResponse('Video play command is sent'));
+})
+
+app.get('/api/video/pause', (req, res) => {
+    res.send(apiResponse('Video pause command is sent'));
+})
+
+app.get('/api/video/stop', (req, res) => {
+    res.send(apiResponse('Video stop command is sent'));
+})
+
+app.get('/api/volume/increase', (req, res) => {
+    res.send(apiResponse('Volume increase command is sent'));
+})
+
+app.get('/api/volume/decrease', (req, res) => {
+    res.send(apiResponse('Volume decrease command is sent'));
+})
+
+app.get('/api/volume/mute', (req, res) => {
+    res.send(apiResponse('Volume mute command is sent'));
+})
+
 function apiResponse(results) {
     // return JSON.stringify({ "status": 200, "error": null, "response": results });
     return { "status": 200, "error": null, "response": results };
