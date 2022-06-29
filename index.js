@@ -43,8 +43,8 @@ io.on('connection', (socket) => {
     socket.on('disconnect', () => {
       console.log('user disconnected');
     });
-    socket.on('play', (msg) => {
-      io.emit('play', msg);
+    socket.on('video', (msg) => {
+      io.emit('video', msg);
     });
   });
 
