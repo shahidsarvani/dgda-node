@@ -24,13 +24,16 @@
         var socket = io();
         var video = document.getElementById('video')
         socket.on('play', function (msg) {
+            console.log('playing')
             video.play();
         });
         socket.on('pause', function (msg) {
+            console.log('pausing')
             // var video = document.getElementById('video')
             video.pause();
         });
         socket.on('stop', function (msg) {
+            console.log('stopping')
             // var video = document.getElementById('video')
             video.stop();
         });
