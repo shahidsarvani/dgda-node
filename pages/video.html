@@ -23,19 +23,27 @@
     <script>
         var socket = io();
         var video = document.getElementById('video')
-        socket.on('play', function (msg) {
-            console.log('playing')
-            video.play();
-        });
-        socket.on('pause', function (msg) {
-            console.log('pausing')
-            // var video = document.getElementById('video')
-            video.pause();
-        });
-        socket.on('stop', function (msg) {
-            console.log('stopping')
-            // var video = document.getElementById('video')
-            video.stop();
+        socket.on('video_command', function (msg) {
+            console.log('video Command')
+            if (msg == 'play') {
+                console.log('play')
+                video.play();
+            } else if (msg == 'pause') {
+                console.log('pause')
+                video.pause();
+            } else if (msg == 'stop') {
+                console.log('stop')
+                video.stop();
+            } else if (msg == 'up') {
+                console.log('up')
+                video.volume = 1;
+            } else if (msg == 'down') {
+                console.log('down')
+                video.volume = 0.5;
+            } else if (msg == 'mute') {
+                console.log('mute')
+                video.volume = 0;
+            }
         });
     </script>
 </body>
