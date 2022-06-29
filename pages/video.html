@@ -22,14 +22,16 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io();
-        var video = document.getElementById('video')
         socket.on('play', function (msg) {
+            var video = document.getElementById('video')
             video.play();
         });
         socket.on('pause', function (msg) {
+            var video = document.getElementById('video')
             video.pause();
         });
         socket.on('stop', function (msg) {
+            var video = document.getElementById('video')
             video.stop();
         });
     </script>
