@@ -40,24 +40,24 @@
                     video.currentTime = 0;
                     break;
                 case "up":
-                    if(video.volume < 1) {
-                        video.muted = false;
-                        video.volume += 0.1;
-                    }
                     if(video.volume == 1) {
                         video.muted = false;
                         video.volume = 1;
                     }
+                    if(video.volume < 1) {
+                        video.muted = false;
+                        video.volume += 0.1;
+                    }
                     break;
                 case "down":
-                    if(video.volume > 0) {
-                        video.muted = false;
-                        video.volume -= 0.1;
-                    } 
                     if(video.volume == 0 || video.muted == true) {
                         video.volume = 0;
                         video.muted = true;
                     }
+                    if(video.volume > 0) {
+                        video.muted = false;
+                        video.volume -= 0.1;
+                    } 
                     break;
                 case "mute":
                     video.muted = true;
