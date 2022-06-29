@@ -23,6 +23,9 @@
     <script>
         var socket = io();
         var video = document.getElementById('video')
+        socket.on('play', function (msg) {
+            video.play();
+        })
         socket.on('video command', function (msg) {
             console.log('video Command')
             if (msg == 'play') {
