@@ -27,7 +27,7 @@
         //     video.play();
         // })
         socket.on('video', function (msg) {
-            console.log('video Command')
+            console.log(msg)
             switch (msg) {
                 case "play":
                     video.play();
@@ -37,7 +37,7 @@
                     break;
                 case "stop":
                     video.pause();
-                    vide.currentTime = 0;
+                    vide0.currentTime = 0;
                     break;
                 case "up":
                     video.muted = false;
