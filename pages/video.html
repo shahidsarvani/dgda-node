@@ -53,8 +53,7 @@
                     if(video.volume == 0 || video.muted == true) {
                         video.volume = 0;
                         video.muted = true;
-                    }
-                    if(video.volume > 0) {
+                    } else if(video.volume > 0) {
                         video.muted = false;
                         video.volume -= 0.1;
                     } 
