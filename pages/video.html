@@ -21,7 +21,9 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        var socket = io();
+        var socket = io.Socket();
+        socket = io.connect({'force new connection': true})
+        
         var video = document.getElementById('video')
         socket.on('play', function (msg) {
             console.log('playing')
