@@ -26,32 +26,32 @@
 
         function play() {
             console.log('play')
-            socket.emit('play', 'play');
+            socket.emit('video_command', 'play');
         }
 
         function pause() {
             console.log('pause')
-            socket.emit('video command', 'pause');
+            socket.emit('video_command', 'pause');
         }
 
         function stop_vid() {
             console.log('stop')
-            socket.emit('video command', 'stop');
+            socket.emit('video_command', 'stop');
         }
 
         function up() {
             console.log('up')
-            socket.emit('video command', 'up');
+            socket.emit('video_command', 'up');
         }
 
         function down() {
             console.log('down')
-            socket.emit('video command', 'down');
+            socket.emit('video_command', 'down');
         }
 
         function mute() {
             console.log('mute')
-            socket.emit('video command', 'mute');
+            socket.emit('video_command', 'mute');
         }
 
         // socket.on('chat message', function (msg) {
