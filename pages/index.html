@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+</head>
+
+<body>
+    <section class="d-flex flex-column align-items-center justify-content-center container vh-100">
+        <button type="button" onclick="play()" class="btn btn-primary m-2 w-25">Play</button>
+        <button type="button" onclick="pause()" class="btn btn-primary m-2 w-25">Pause</button>
+        <button type="button" onclick="stop_vid()" class="btn btn-primary m-2 w-25">Stop</button>
+        <button type="button" onclick="up()" class="btn btn-primary m-2 w-25">Volume Up</button>
+        <button type="button" onclick="down()" class="btn btn-primary m-2 w-25">Volume Down</button>
+        <button type="button" onclick="mute()" class="btn btn-primary m-2 w-25">Volume Mute</button>
+    </section>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+
+        function play() {
+            socket.emit('play', 'play');
+        }
+
+        function pause() {
+            socket.emit('pause', 'pause');
+        }
+
+        function stop_vid() {
+            socket.emit('stop_vid', 'stop_vid');
+        }
+
+        function up() {
+            socket.emit('up', 'up');
+        }
+
+        function down() {
+            socket.emit('down', 'down');
+        }
+
+        function mute() {
+            socket.emit('mute', 'mute');
+        }
+
+        // socket.on('chat message', function (msg) {
+        //     var item = document.createElement('li');
+        //     item.textContent = msg;
+        //     messages.appendChild(item);
+        //     window.scrollTo(0, document.body.scrollHeight);
+        // });
+    </script>
+</body>
+
+</html>

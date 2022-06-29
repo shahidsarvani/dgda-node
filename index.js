@@ -2,10 +2,15 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const mysql = require('mysql');
-const cors = require('cors')
+const cors = require('cors');
+const http = require('http');
+const server = http.createServer(app);
+const { Server } = require("socket.io");
+const io = new Server(server);
 
 app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
+app.use('/media/video', express.static('media/video'));
 app.use(cors());
 
 const conn = mysql.createConnection({
@@ -13,6 +18,10 @@ const conn = mysql.createConnection({
     user: 'root', /* MySQL User */
     password: '', /* MySQL Password */
     database: 'dgda' /* MySQL Database */
+    // host: '18.170.155.197',
+    // user: 'admin_dgda_cms_user', /* MySQL User */
+    // password: '3S~9f7a7b', /* MySQL Password */
+    // database: 'admin_dgda_cms_db' /* MySQL Database */
 });
 
 conn.connect((err) => {
@@ -20,14 +29,33 @@ conn.connect((err) => {
     console.log('Mysql Connected with App...');
 });
 
+
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/pages/index.html');
+});
+
+app.get('/video', (req, res) => {
+    res.sendFile(__dirname + '/pages/video.html');
+});
+
+io.on('connection', (socket) => {
+    console.log('a user connected');
+    socket.on('disconnect', () => {
+      console.log('user disconnected');
+    });
+    socket.on('play', (msg) => {
+      io.emit('play', msg);
+    });
+  });
+
 app.get('/api/rooms', (req, res) => {
     let sqlQuery = "SELECT * FROM rooms";
 
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) throw err;
-        results.map(function(result) {
-            result.image = 'http://localhost:3000/media/images/'+result.image
-            result.image_ar = 'http://localhost:3000/media/images/'+result.image_ar
+        results.map(function (result) {
+            result.image = 'http://localhost:3000/media/images/' + result.image
+            result.image_ar = 'http://localhost:3000/media/images/' + result.image_ar
         })
         res.send(apiResponse(results));
     });
@@ -64,7 +92,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
         //     })
         // }
         // setTimeout(() => {
-            res.send(apiResponse(scenes));
+        res.send(apiResponse(scenes));
         // }, 10)
     });
 });
@@ -82,7 +110,7 @@ app.get('/api/room/:id/zones', (req, res) => {
         //     })
         // }
         // setTimeout(() => {
-            res.send(apiResponse(scenes));
+        res.send(apiResponse(scenes));
         // }, 10)
     });
 });
@@ -124,6 +152,6 @@ function apiResponse(results) {
     return { "status": 200, "error": null, "response": results };
 }
 
-app.listen(3000, () => {
+server.listen(3000, () => {
     console.log('Server started on port 3000...');
 });
