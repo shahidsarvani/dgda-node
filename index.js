@@ -41,20 +41,37 @@ app.get('/video', (req, res) => {
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on('disconnect', () => {
-      console.log('user disconnected');
+        console.log('user disconnected');
     });
     socket.on('video', (msg) => {
-      io.emit('video', msg);
+        io.emit('video', msg);
     });
-  });
+});
 
 app.get('/api/rooms', (req, res) => {
-    let sqlQuery = "SELECT * FROM rooms";
+    let sqlQuery = "SELECT id, name, image, has_model FROM rooms";
 
     let query = conn.query(sqlQuery, (err, results) => {
-        if (err) throw err;
+        if (err) {
+            res.send(apiResponseBad(null));
+        };
         results.map(function (result) {
             result.image = 'http://localhost:3000/media/images/' + result.image
+            // result.image_ar = 'http://localhost:3000/media/images/' + result.image_ar
+        })
+        res.send(apiResponse(results));
+    });
+});
+
+app.get('/api/rooms/ar', (req, res) => {
+    let sqlQuery = "SELECT id, name_ar, image_ar, has_model FROM rooms";
+
+    let query = conn.query(sqlQuery, (err, results) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        };
+        results.map(function (result) {
+            // result.image = 'http://localhost:3000/media/images/' + result.image
             result.image_ar = 'http://localhost:3000/media/images/' + result.image_ar
         })
         res.send(apiResponse(results));
@@ -62,57 +79,125 @@ app.get('/api/rooms', (req, res) => {
 });
 
 app.get('/api/room/:id/phases_with_zones', (req, res) => {
-    let sqlQuery = "SELECT * FROM phases WHERE room_id = " + req.params.id;
+    // res.send(req.params.id);
+    try {
+        let sqlQuery = "SELECT id, name, image FROM phases WHERE room_id = " + req.params.id;
 
-    let query = conn.query(sqlQuery, (err, phases) => {
-        if (err) throw err;
-        for (let i = 0; i < phases.length; i++) {
-            let sqlQuery = "SELECT * FROM zones WHERE phase_id = " + phases[i].id;
-            conn.query(sqlQuery, (err, zones) => {
-                if (err) throw err;
-                phases[i].zones = zones
-            })
-        }
-        setTimeout(() => {
-            res.send(apiResponse(phases));
-        }, 100)
-    });
+        let query = conn.query(sqlQuery, (err, phases) => {
+            if (err) {
+                res.send(apiResponseBad(null));
+            };
+            for (let i = 0; i < phases.length; i++) {
+                phases[i].image = 'http://localhost:3000/media/images/' + phases[i].image
+                let sqlQuery = "SELECT id, name FROM zones WHERE phase_id = " + phases[i].id;
+                conn.query(sqlQuery, (err, zones) => {
+                    if (err) {
+                        res.send(apiResponseBad(null));
+                    };
+                    phases[i].zones = zones
+                })
+            }
+            setTimeout(() => {
+                res.send(apiResponse(phases));
+            }, 100)
+        });
+    } catch (error) {
+        console.log(error)
+        res.send(apiResponseBad(null));
+    }
+});
+
+app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
+    // res.send(req.params.id);
+    try {
+        let sqlQuery = "SELECT id, name_ar, image_ar FROM phases WHERE room_id = " + req.params.id;
+
+        let query = conn.query(sqlQuery, (err, phases) => {
+            if (err) {
+                res.send(apiResponseBad(null));
+            };
+            for (let i = 0; i < phases.length; i++) {
+                phases[i].image_ar = 'http://localhost:3000/media/images/' + phases[i].image_ar
+                let sqlQuery = "SELECT id, name_ar FROM zones WHERE phase_id = " + phases[i].id;
+                conn.query(sqlQuery, (err, zones) => {
+                    if (err) {
+                        res.send(apiResponseBad(null));
+                    };
+                    phases[i].zones = zones
+                })
+            }
+            setTimeout(() => {
+                res.send(apiResponse(phases));
+            }, 100)
+        });
+    } catch (error) {
+        console.log(error)
+        res.send(apiResponseBad(null));
+    }
 });
 
 app.get('/api/room/:id/light_scenes', (req, res) => {
-    let sqlQuery = "SELECT * FROM light_scenes WHERE room_id = " + req.params.id;
+    try {
+        let sqlQuery = "SELECT id, name FROM light_scenes WHERE room_id = " + req.params.id;
 
-    let query = conn.query(sqlQuery, (err, scenes) => {
-        if (err) throw err;
-        // for (let i = 0; i < scenes.length; i++) {
-        //     let sqlQuery = "SELECT commands.*, command_light_scenes.light_scene_id AS pivot_light_scene_id, command_light_scenes.command_id AS pivot_command_id FROM commands INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id IN (" + scenes[i].id + ")";
-        //     conn.query(sqlQuery, (err, commands) => {
-        //         if (err) throw err;
-        //         scenes[i].commands = commands
-        //     })
-        // }
-        // setTimeout(() => {
-        res.send(apiResponse(scenes));
-        // }, 10)
-    });
+        let query = conn.query(sqlQuery, (err, scenes) => {
+            if (err) {
+                res.send(apiResponseBad(null));
+            }
+            res.send(apiResponse(scenes));
+        });
+    } catch (error) {
+        console.log(error)
+        res.send(apiResponseBad(null));
+    }
+});
+
+app.get('/api/room/:id/light_scenes/ar', (req, res) => {
+    try {
+        let sqlQuery = "SELECT id, name_ar FROM light_scenes WHERE room_id = " + req.params.id;
+
+        let query = conn.query(sqlQuery, (err, scenes) => {
+            if (err) {
+                res.send(apiResponseBad(null));
+            };
+            res.send(apiResponse(scenes));
+        });
+    } catch (error) {
+        console.log(error)
+        res.send(apiResponseBad(null));
+    }
 });
 
 app.get('/api/room/:id/zones', (req, res) => {
-    let sqlQuery = "SELECT * FROM zones WHERE room_id = " + req.params.id;
+    try {
+        let sqlQuery = "SELECT id, name FROM zones WHERE room_id = " + req.params.id;
 
-    let query = conn.query(sqlQuery, (err, scenes) => {
-        if (err) throw err;
-        // for (let i = 0; i < scenes.length; i++) {
-        //     let sqlQuery = "SELECT commands.*, command_light_scenes.light_scene_id AS pivot_light_scene_id, command_light_scenes.command_id AS pivot_command_id FROM commands INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id IN (" + scenes[i].id + ")";
-        //     conn.query(sqlQuery, (err, commands) => {
-        //         if (err) throw err;
-        //         scenes[i].commands = commands
-        //     })
-        // }
-        // setTimeout(() => {
-        res.send(apiResponse(scenes));
-        // }, 10)
-    });
+        let query = conn.query(sqlQuery, (err, scenes) => {
+            if (err) {
+                res.send(apiResponseBad(null));
+            };
+            res.send(apiResponse(scenes));
+        });
+    } catch (error) {
+        console.log(error)
+        res.send(apiResponseBad(null));
+    }
+});
+
+app.get('/api/room/:id/zones/ar', (req, res) => {
+    try {
+        let sqlQuery = "SELECT id, name_ar FROM zones WHERE room_id = " + req.params.id;
+
+        let query = conn.query(sqlQuery, (err, scenes) => {
+            if (err) {
+                res.send(apiResponseBad(null));
+            };
+            res.send(apiResponse(scenes));
+        });
+    } catch (error) {
+        console.log(error)
+        res.send(apiResponseBad(null));
+    }
 });
 
 app.get('/api/model/up', (req, res) => {
@@ -150,6 +235,11 @@ app.get('/api/volume/mute', (req, res) => {
 function apiResponse(results) {
     // return JSON.stringify({ "status": 200, "error": null, "response": results });
     return { "status": 200, "error": null, "response": results };
+}
+
+function apiResponseBad(results) {
+    // return JSON.stringify({ "status": 200, "error": null, "response": results });
+    return { "status": 500, "error": true, "response": results };
 }
 
 server.listen(3000, () => {
