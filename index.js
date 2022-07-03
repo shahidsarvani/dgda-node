@@ -144,6 +144,9 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
             if (err) {
                 res.send(apiResponseBad(null));
             }
+            scenes.map(function (result) {
+                result.image = 'http://localhost:3000/media/images/' + result.image_en
+            })
             res.send(apiResponse(scenes));
         });
     } catch (error) {
@@ -160,6 +163,9 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
             if (err) {
                 res.send(apiResponseBad(null));
             };
+            scenes.map(function (result) {
+                result.image = 'http://localhost:3000/media/images/' + result.image_ar
+            })
             res.send(apiResponse(scenes));
         });
     } catch (error) {
