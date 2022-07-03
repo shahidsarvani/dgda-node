@@ -138,7 +138,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
 
 app.get('/api/room/:id/light_scenes', (req, res) => {
     try {
-        let sqlQuery = "SELECT id, name FROM light_scenes WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name, image_en FROM light_scenes WHERE room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
@@ -157,7 +157,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
 
 app.get('/api/room/:id/light_scenes/ar', (req, res) => {
     try {
-        let sqlQuery = "SELECT id, name_ar FROM light_scenes WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name_ar, image_ar FROM light_scenes WHERE room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
