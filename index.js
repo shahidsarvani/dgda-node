@@ -215,26 +215,44 @@ app.get('/api/model/down', (req, res) => {
 })
 
 app.get('/api/video/play', (req, res) => {
+    socket.on('video', (msg) => {
+        io.emit('video', msg);
+    });
     res.send(apiResponse('Video play command is sent'));
 })
 
 app.get('/api/video/pause', (req, res) => {
+    socket.on('video', (msg) => {
+        io.emit('video', msg);
+    });
     res.send(apiResponse('Video pause command is sent'));
 })
 
 app.get('/api/video/stop', (req, res) => {
+    socket.on('video', (msg) => {
+        io.emit('video', msg);
+    });
     res.send(apiResponse('Video stop command is sent'));
 })
 
 app.get('/api/volume/increase', (req, res) => {
+    socket.on('video', (msg) => {
+        io.emit('video', msg);
+    });
     res.send(apiResponse('Volume increase command is sent'));
 })
 
 app.get('/api/volume/decrease', (req, res) => {
+    socket.on('video', (msg) => {
+        io.emit('video', msg);
+    });
     res.send(apiResponse('Volume decrease command is sent'));
 })
 
 app.get('/api/volume/mute', (req, res) => {
+    socket.on('video', (msg) => {
+        io.emit('video', msg);
+    });
     res.send(apiResponse('Volume mute command is sent'));
 })
 
