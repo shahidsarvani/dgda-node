@@ -256,7 +256,7 @@ app.get('/api/volume/mute', (req, res) => {
     res.send(apiResponse('Volume mute command is sent'));
 })
 
-app.get('/api/light_scene_command', (req, res) => {
+app.get('/api/light_scene_command/:id', (req, res) => {
     // socket.on('video', (msg) => {
     //     io.emit('video', msg);
     // });
