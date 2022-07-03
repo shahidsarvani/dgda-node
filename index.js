@@ -256,6 +256,13 @@ app.get('/api/volume/mute', (req, res) => {
     res.send(apiResponse('Volume mute command is sent'));
 })
 
+app.get('/api/light_scene_command', (req, res) => {
+    // socket.on('video', (msg) => {
+    //     io.emit('video', msg);
+    // });
+    res.send(apiResponse('command is sent'));
+})
+
 function apiResponse(results) {
     // return JSON.stringify({ "status": 200, "error": null, "response": results });
     return { "status": 200, "error": null, "response": results };
