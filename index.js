@@ -263,14 +263,14 @@ app.get('/api/light_scene_command/:id', (req, res) => {
     res.send(apiResponse('command is sent'));
 })
 
-app.get('/api/room/:id/play_scene', (req, res) => {
+app.post('/api/room/:id/play_scene', (req, res) => {
     // socket.on('video', (msg) => {
     //     io.emit('video', msg);
     // });
     res.send(apiResponse('command is sent'));
 })
 
-app.get('/api/zone/:id/play_scene', (req, res) => {
+app.post('/api/zone/:id/play_scene', (req, res) => {
     // socket.on('video', (msg) => {
     //     io.emit('video', msg);
     // });
