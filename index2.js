@@ -3,7 +3,12 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const app = express();
 const mysql = require('mysql');
-var server = net.createServer();
+// var server = net.createServer();
+const http = require('http');
+const server = http.createServer(app);
+var socket = new net.Socket({
+    writeable: true,
+});
 
 // app.use(bodyParser.json());
 
@@ -23,9 +28,19 @@ conn.connect((err) => {
     console.log('Mysql Connected with App...');
 });
 
-server.listen(58900, () => {
+server.listen(3002, () => {
     console.log('opened server on %j', server.address().port);
 });
+
+socket.connect({
+    port: 58900,
+    host: 'localhost'
+}, (error) => {
+    if (error) throw error;
+    console.log('Net socket connected...');
+    console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+})
+
 // const client = net.createConnection({ port: 58900 }, () => {
 //     // 'connect' listener.
 //     console.log('connected to server!');
@@ -41,38 +56,18 @@ server.listen(58900, () => {
 //     console.log(res);
 // });
 
-// app.get('/api/light_scene_command/:id', (req, res) => {
+app.get('/api/light_scene_command/:id', (req, res) => {
 
-//     let sqlQuery = "SELECT name FROM `commands` INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
+    let sqlQuery = "SELECT name FROM `commands` INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
 
-//     let query = conn.query(sqlQuery, (err, result) => {
-//         if (err) {
-//             res.send(apiResponseBad(null));
-//         }
+    let query = conn.query(sqlQuery, (err, result) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        }
 
-//         server.on("connection", (socket) => {
-//             console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
-//             socket.setKeepAlive(true); // to keep the status connected with crestron
-//             var res1 = socket.write(result.name);
-//             console.log(res1);
-//             res.send(apiResponse('command is sent'));
-//         });
-//     });
-//     // return res.send(req.params.id)
-// })
-
-
-server.on("connection", (socket) => {
-    console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
-    socket.setKeepAlive(true); // to keep the status connected with crestron
-    app.get('/api/light_scene_command/:id', (req, res) => {
-
-        let sqlQuery = "SELECT name FROM `commands` INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
-
-        let query = conn.query(sqlQuery, (err, result) => {
-            if (err) {
-                res.send(apiResponseBad(null));
-            }
+        server.on("connection", (socket) => {
+            console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+            socket.setKeepAlive(true); // to keep the status connected with crestron
             var res1 = socket.write(result.name);
             console.log(res1);
             res.send(apiResponse('command is sent'));
@@ -80,6 +75,26 @@ server.on("connection", (socket) => {
     });
     // return res.send(req.params.id)
 })
+
+
+// server.on("connection", (socket) => {
+//     console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+//     socket.setKeepAlive(true); // to keep the status connected with crestron
+//     app.get('/api/light_scene_command/:id', (req, res) => {
+
+//         let sqlQuery = "SELECT name FROM `commands` INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
+
+//         let query = conn.query(sqlQuery, (err, result) => {
+//             if (err) {
+//                 res.send(apiResponseBad(null));
+//             }
+//             var res1 = socket.write(result.name);
+//             console.log(res1);
+//             res.send(apiResponse('command is sent'));
+//         });
+//     });
+//     // return res.send(req.params.id)
+// })
 
 app.get('/api/model/up', (req, res) => {
     // server.on("connection", (socket) => {
