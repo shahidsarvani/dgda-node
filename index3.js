@@ -9,14 +9,18 @@ server.listen(58900, () => {
 });
 
 
-var socket = server.on("connection", (socket) => {
+server.on("connection", (socket) => {
     console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
     socket.setKeepAlive(true); // to keep the status connected with crestron
     var res = socket.write('test from Anees');
     console.log(res);
-    socket.end(() => {
-        console.log('socket ended')
+
+    server.close(() => {
+        console.log('server closed')
     });
+    // socket.end(() => {
+    //     console.log('socket ended')
+    // });
     // var res2 = socket.write('test 2 from Anees');
     // console.log(res2);
 });
