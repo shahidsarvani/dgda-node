@@ -61,6 +61,8 @@ var socket = server.on("connection", (socket) => {
 
 setTimeout(function() {
     console.log(gSocket.remoteAddress + ":" + gSocket.remotePort);
+    var res2 = gSocket.write('test 2 from Anees');
+    console.log(res2);
 }, 30000)
 
 app.get('/api/light_scene_command/:id', (req, res) => {
