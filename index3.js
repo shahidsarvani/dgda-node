@@ -5,7 +5,7 @@ var server = net.createServer();
 
 
 server.listen(58900, () => {
-    console.log('opened server on %j:%k',server.address().address, server.address().port);
+    console.log('opened server on %j:%k', server.address().address, server.address().port);
 });
 
 
@@ -14,7 +14,9 @@ var socket = server.on("connection", (socket) => {
     socket.setKeepAlive(true); // to keep the status connected with crestron
     var res = socket.write('test from Anees');
     console.log(res);
-    socket.close();
+    socket.end(() => {
+        console.log('socket ended')
+    });
     // var res2 = socket.write('test 2 from Anees');
     // console.log(res2);
 });
