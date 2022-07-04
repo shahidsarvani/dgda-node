@@ -292,7 +292,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
 
 })
 
-api.get('/api/test', (req, res) => {
+app.get('/api/test', (req, res) => {
     var fork = require('child_process').fork;
     var child = fork('./index3.js');
     res.send(apiResponseBad(null));
