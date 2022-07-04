@@ -8,7 +8,7 @@ const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
 const child_process = require('child_process');
-const child_script_path = 'index1.js';
+const child_script_path = 'tcp.js';
 
 app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
@@ -263,10 +263,25 @@ app.get('/api/volume/mute', (req, res) => {
     res.send(apiResponse('Volume mute command is sent'));
 })
 
-// app.get('/api/light_scene_command/:id', (req, res) => {
+app.get('/api/light_scene_command/:id', (req, res) => {
+    let sqlQuery = "SELECT name FROM `commands` INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
 
-//     res.send(apiResponse('command is sent'));
-// })
+    // res.send(apiResponse(sqlQuery));
+    let query = conn.query(sqlQuery, (err, results) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        } else {
+            var child_argv = results.map((result) => {
+                return result.name
+            })
+            // res.send(apiResponse(child_argv));
+            let child = child_process.fork(child_script_path, child_argv)
+            res.send(apiResponse('command is sent'));
+        }
+    });
+
+    // res.send(apiResponse('command is sent'));
+})
 
 // app.post('/api/room/:id/play_scene', (req, res) => {
 //     // socket.on('video', (msg) => {
@@ -302,7 +317,7 @@ app.get('/api/test', (req, res) => {
     // const child_execArgv = [
     //   '--use-strict'
     // ]
-    
+
     let child = child_process.fork(child_script_path, child_argv)
     res.send(apiResponseBad(null));
 })
