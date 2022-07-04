@@ -12,6 +12,11 @@ app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
 app.use('/media/video', express.static('media/video'));
 app.use(cors());
+app.use(
+    express.urlencoded({
+        extended: true,
+    })
+);
 
 const conn = mysql.createConnection({
     host: 'localhost',
@@ -216,50 +221,50 @@ app.get('/api/model/down', (req, res) => {
 
 app.get('/api/video/play', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'play');
+    io.emit('video', 'play');
     // });
     res.send(apiResponse('Video play command is sent'));
 })
 
 app.get('/api/video/pause', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'pause');
+    io.emit('video', 'pause');
     // });
     res.send(apiResponse('Video pause command is sent'));
 })
 
 app.get('/api/video/stop', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'stop');
+    io.emit('video', 'stop');
     // });
     res.send(apiResponse('Video stop command is sent'));
 })
 
 app.get('/api/volume/increase', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'up');
+    io.emit('video', 'up');
     // });
     res.send(apiResponse('Volume increase command is sent'));
 })
 
 app.get('/api/volume/decrease', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'down');
+    io.emit('video', 'down');
     // });
     res.send(apiResponse('Volume decrease command is sent'));
 })
 
 app.get('/api/volume/mute', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'mute');
+    io.emit('video', 'mute');
     // });
     res.send(apiResponse('Volume mute command is sent'));
 })
 
-app.get('/api/light_scene_command/:id', (req, res) => {
-    
-    res.send(apiResponse('command is sent'));
-})
+// app.get('/api/light_scene_command/:id', (req, res) => {
+
+//     res.send(apiResponse('command is sent'));
+// })
 
 // app.post('/api/room/:id/play_scene', (req, res) => {
 //     // socket.on('video', (msg) => {
@@ -268,12 +273,24 @@ app.get('/api/light_scene_command/:id', (req, res) => {
 //     res.send(apiResponse('command is sent'));
 // })
 
-// app.post('/api/zone/:id/play_scene', (req, res) => {
-//     // socket.on('video', (msg) => {
-//     //     io.emit('video', msg);
-//     // });
-//     res.send(apiResponse('command is sent'));
-// })
+app.post('/api/zone/:id/play_scene', (req, res) => {
+    // socket.on('video', (msg) => {
+    //     io.emit('video', msg);
+    // });
+    var lang = req.body.lang;
+    let sqlQuery = "SELECT name FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "'";
+    
+    // return res.send(apiResponse(sqlQuery));
+    let query = conn.query(sqlQuery, (err, result) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        };
+        // return res.send(apiResponse(result[0].name));
+        io.emit('change_video', result[0].name);
+        res.send(apiResponse('command is sent'));
+    });
+
+})
 
 function apiResponse(results) {
     // return JSON.stringify({ "status": 200, "error": null, "response": results });
