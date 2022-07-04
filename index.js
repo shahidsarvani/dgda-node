@@ -7,6 +7,8 @@ const http = require('http');
 const server = http.createServer(app);
 const { Server } = require("socket.io");
 const io = new Server(server);
+const child_process = require('child_process');
+const child_script_path = 'index1.js';
 
 app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
@@ -279,7 +281,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     // });
     var lang = req.body.lang;
     let sqlQuery = "SELECT name FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "'";
-    
+
     // return res.send(apiResponse(sqlQuery));
     let query = conn.query(sqlQuery, (err, result) => {
         if (err) {
@@ -293,8 +295,15 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
 })
 
 app.get('/api/test', (req, res) => {
-    var fork = require('child_process').fork;
-    var child = fork('./index3.js');
+    const child_argv = [
+        'test',
+        'test2'
+    ]
+    // const child_execArgv = [
+    //   '--use-strict'
+    // ]
+    
+    let child = child_process.fork(child_script_path, child_argv)
     res.send(apiResponseBad(null));
 })
 
