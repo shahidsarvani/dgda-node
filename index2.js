@@ -30,7 +30,7 @@ conn.connect((err) => {
 });
 
 server.listen(58900, () => {
-    console.log('opened server on %j', server.address().port);
+    console.log('opened server on %j:%k',server.address(), server.address().port);
 });
 
 // socket.connect({
