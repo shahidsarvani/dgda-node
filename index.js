@@ -54,7 +54,7 @@ io.on('connection', (socket) => {
 });
 
 app.get('/api/rooms', (req, res) => {
-    let sqlQuery = "SELECT id, name, image, has_model FROM rooms WHERE type = 1 AND status = 1 ORDER BY name";
+    let sqlQuery = "SELECT id, name, name_ar, image, image_ar, has_model FROM rooms WHERE type = 1 AND status = 1 ORDER BY name";
 
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
