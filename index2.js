@@ -34,7 +34,6 @@ server.listen(3002, () => {
 
 socket.connect({
     port: 58900,
-    host: 'localhost'
 }, (error) => {
     if (error) throw error;
     console.log('Net socket connected...');
