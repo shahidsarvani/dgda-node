@@ -1,9 +1,9 @@
 const net = require('net');
-// const bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 const express = require('express');
 const app = express();
-// const mysql = require('mysql');
-// var server = net.createServer();
+const mysql = require('mysql');
+var server = net.createServer();
 
 // app.use(bodyParser.json());
 
@@ -23,16 +23,16 @@ const app = express();
 //     console.log('Mysql Connected with App...');
 // });
 
-// server.listen(58900, () => {
-//     console.log('opened server on %j', server.address().port);
-// });
-const client = net.createConnection({ port: 58900 }, () => {
-    // 'connect' listener.
-    console.log('connected to server!');
-    console.log("Client connection details - ", client.remoteAddress + ":" + client.remotePort);
-    var res = client.write('world!\r\n');
-    console.log(res)
+server.listen(58900, () => {
+    console.log('opened server on %j', server.address().port);
 });
+// const client = net.createConnection({ port: 58900 }, () => {
+//     // 'connect' listener.
+//     console.log('connected to server!');
+//     console.log("Client connection details - ", client.remoteAddress + ":" + client.remotePort);
+//     var res = client.write('world!\r\n');
+//     console.log(res)
+// });
 
 // var socket = server.on("connection", (socket) => {
 //     console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
@@ -43,5 +43,27 @@ const client = net.createConnection({ port: 58900 }, () => {
 
 app.get('/api/light_scene_command/:id', (req, res) => {
 
-    res.send(apiResponse('command is sent'));
+    let sqlQuery = "SELECT name FROM `commands` INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
+
+    let query = conn.query(sqlQuery, (err, result) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        }
+    
+        server.on("connection", (socket) => {
+            console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+            socket.setKeepAlive(true); // to keep the status connected with crestron
+            var res = socket.write(result.name);
+            console.log(res);
+            res.send(apiResponse('command is sent'));
+        });
+    });
+    // return res.send(req.params.id)
 })
+
+// app.post('/api/zone/:id/play_scene', (req, res) => {
+//     // socket.on('video', (msg) => {
+//     //     io.emit('video', msg);
+//     // });
+//     res.send(apiResponse('command is sent'));
+// })
