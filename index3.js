@@ -14,6 +14,7 @@ var socket = server.on("connection", (socket) => {
     socket.setKeepAlive(true); // to keep the status connected with crestron
     var res = socket.write('test from Anees');
     console.log(res);
+    socket.close();
     // var res2 = socket.write('test 2 from Anees');
     // console.log(res2);
 });
