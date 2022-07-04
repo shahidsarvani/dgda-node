@@ -74,13 +74,13 @@ app.get('/api/light_scene_command/:id', (req, res) => {
             res.send(apiResponseBad(null));
         }
 
-        server.on("connection", (socket) => {
-            console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
-            socket.setKeepAlive(true); // to keep the status connected with crestron
-            var res1 = socket.write(result.name);
+        // server.on("connection", (socket) => {
+        //     console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+        //     socket.setKeepAlive(true); // to keep the status connected with crestron
+            var res1 = gSocket.write(result.name);
             console.log(res1);
             res.send(apiResponse('command is sent'));
-        });
+        // });
     });
     // return res.send(req.params.id)
 })
