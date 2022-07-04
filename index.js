@@ -215,9 +215,9 @@ app.get('/api/model/down', (req, res) => {
 })
 
 app.get('/api/video/play', (req, res) => {
-    socket.on('video', (msg) => {
+    // socket.on('video', (msg) => {
         io.emit('video', 'play');
-    });
+    // });
     res.send(apiResponse('Video play command is sent'));
 })
 
