@@ -12,9 +12,12 @@ server.on("connection", (socket) => {
     process.argv.forEach(function (val, index, array) {
       if(index>1)
       {
-        res = socket.write(v);
+        res = socket.write(val);
         console.log(res);
       }
     });
+    console.log("about to end");
+    socket.destroy();
+    server.close();
 });
 
