@@ -292,6 +292,11 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
 
 })
 
+api.get('/api/test', (req, res) => {
+    var fork = require('child_process').fork;
+    var child = fork('./index3.js');
+})
+
 function apiResponse(results) {
     // return JSON.stringify({ "status": 200, "error": null, "response": results });
     return { "status": 200, "error": null, "response": results };
