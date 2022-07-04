@@ -12,6 +12,11 @@ app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
 app.use('/media/video', express.static('media/video'));
 app.use(cors());
+app.use(
+    express.urlencoded({
+        extended: true,
+    })
+);
 
 const conn = mysql.createConnection({
     host: 'localhost',
@@ -56,8 +61,8 @@ app.get('/api/rooms', (req, res) => {
             res.send(apiResponseBad(null));
         };
         results.map(function (result) {
-            result.image = 'http://localhost:3000/media/images/' + result.image
-            // result.image_ar = /* 'http://localhost:3000/media/images/' + */ result.image_ar
+            result.image = 'http://localhost:3001/media/images/' + result.image
+            // result.image_ar = /* 'http://localhost:3001/media/images/' + */ result.image_ar
         })
         res.send(apiResponse(results));
     });
@@ -71,8 +76,8 @@ app.get('/api/rooms/ar', (req, res) => {
             res.send(apiResponseBad(null));
         };
         results.map(function (result) {
-            // result.image = /* 'http://localhost:3000/media/images/' + */ result.image
-            result.image_ar = 'http://localhost:3000/media/images/' + result.image_ar
+            // result.image = /* 'http://localhost:3001/media/images/' + */ result.image
+            result.image_ar = 'http://localhost:3001/media/images/' + result.image_ar
         })
         res.send(apiResponse(results));
     });
@@ -88,7 +93,7 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
                 res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
-                phases[i].image = 'http://localhost:3000/media/images/' + phases[i].image
+                phases[i].image = 'http://localhost:3001/media/images/' + phases[i].image
                 let sqlQuery = "SELECT id, name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
@@ -117,7 +122,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
                 res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
-                phases[i].image_ar = 'http://localhost:3000/media/images/' + phases[i].image_ar
+                phases[i].image_ar = 'http://localhost:3001/media/images/' + phases[i].image_ar
                 let sqlQuery = "SELECT id, name_ar FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
@@ -145,7 +150,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
                 res.send(apiResponseBad(null));
             }
             scenes.map(function (result) {
-                result.image = 'http://localhost:3000/media/images/' + result.image_en
+                result.image = 'http://localhost:3001/media/images/' + result.image_en
             })
             res.send(apiResponse(scenes));
         });
@@ -164,7 +169,7 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
                 res.send(apiResponseBad(null));
             };
             scenes.map(function (result) {
-                result.image = 'http://localhost:3000/media/images/' + result.image_ar
+                result.image = 'http://localhost:3001/media/images/' + result.image_ar
             })
             res.send(apiResponse(scenes));
         });
@@ -216,50 +221,50 @@ app.get('/api/model/down', (req, res) => {
 
 app.get('/api/video/play', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'play');
+    io.emit('video', 'play');
     // });
     res.send(apiResponse('Video play command is sent'));
 })
 
 app.get('/api/video/pause', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'pause');
+    io.emit('video', 'pause');
     // });
     res.send(apiResponse('Video pause command is sent'));
 })
 
 app.get('/api/video/stop', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'stop');
+    io.emit('video', 'stop');
     // });
     res.send(apiResponse('Video stop command is sent'));
 })
 
 app.get('/api/volume/increase', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'up');
+    io.emit('video', 'up');
     // });
     res.send(apiResponse('Volume increase command is sent'));
 })
 
 app.get('/api/volume/decrease', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'down');
+    io.emit('video', 'down');
     // });
     res.send(apiResponse('Volume decrease command is sent'));
 })
 
 app.get('/api/volume/mute', (req, res) => {
     // socket.on('video', (msg) => {
-        io.emit('video', 'mute');
+    io.emit('video', 'mute');
     // });
     res.send(apiResponse('Volume mute command is sent'));
 })
 
-app.get('/api/light_scene_command/:id', (req, res) => {
-    
-    res.send(apiResponse('command is sent'));
-})
+// app.get('/api/light_scene_command/:id', (req, res) => {
+
+//     res.send(apiResponse('command is sent'));
+// })
 
 // app.post('/api/room/:id/play_scene', (req, res) => {
 //     // socket.on('video', (msg) => {
@@ -268,12 +273,24 @@ app.get('/api/light_scene_command/:id', (req, res) => {
 //     res.send(apiResponse('command is sent'));
 // })
 
-// app.post('/api/zone/:id/play_scene', (req, res) => {
-//     // socket.on('video', (msg) => {
-//     //     io.emit('video', msg);
-//     // });
-//     res.send(apiResponse('command is sent'));
-// })
+app.post('/api/zone/:id/play_scene', (req, res) => {
+    // socket.on('video', (msg) => {
+    //     io.emit('video', msg);
+    // });
+    var lang = req.body.lang;
+    let sqlQuery = "SELECT name FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "'";
+    
+    // return res.send(apiResponse(sqlQuery));
+    let query = conn.query(sqlQuery, (err, result) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        };
+        // return res.send(apiResponse(result[0].name));
+        io.emit('change_video', result[0].name);
+        res.send(apiResponse('command is sent'));
+    });
+
+})
 
 function apiResponse(results) {
     // return JSON.stringify({ "status": 200, "error": null, "response": results });
@@ -286,5 +303,5 @@ function apiResponseBad(results) {
 }
 
 server.listen(3001, () => {
-    console.log('Server started on port 3001...');
+    console.log('Server started on port 3000...');
 });

@@ -53,14 +53,43 @@ app.get('/api/light_scene_command/:id', (req, res) => {
         server.on("connection", (socket) => {
             console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
             socket.setKeepAlive(true); // to keep the status connected with crestron
-            var res = socket.write(result.name);
-            console.log(res);
+            var res1 = socket.write(result.name);
+            console.log(res1);
             res.send(apiResponse('command is sent'));
         });
     });
     // return res.send(req.params.id)
 })
 
+app.get('/api/model/up', (req, res) => {
+    // server.on("connection", (socket) => {
+    //     console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    //     socket.setKeepAlive(true); // to keep the status connected with crestron
+    //     var result = socket.write('GETSTAUS');
+    //     console.log(res);
+    //     if(result == 0) {
+    //         var result2 = socket.write('MODELUP');
+    //         console.log(result2);
+    //     }
+    //     res.send(apiResponse('command is sent'));
+    // });
+    res.send(apiResponse('Model up command is sent'));
+})
+
+app.get('/api/model/down', (req, res) => {
+    // server.on("connection", (socket) => {
+    //     console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    //     socket.setKeepAlive(true); // to keep the status connected with crestron
+    //     var result = socket.write('GETSTAUS');
+    //     console.log(res);
+    //     if(result == 0) {
+    //         var result2 = socket.write('MODELDOWN');
+    //         console.log(result2);
+    //     }
+    //     res.send(apiResponse('command is sent'));
+    // });
+    res.send(apiResponse('Model down command is sent'));
+})
 // app.post('/api/zone/:id/play_scene', (req, res) => {
 //     // socket.on('video', (msg) => {
 //     //     io.emit('video', msg);
