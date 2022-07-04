@@ -3,12 +3,13 @@ const bodyParser = require('body-parser');
 const express = require('express');
 const app = express();
 const mysql = require('mysql');
-// var server = net.createServer();
-const http = require('http');
-const server = http.createServer(app);
-var socket = new net.Socket({
-    writeable: true,
-});
+var server = net.createServer();
+// const http = require('http');
+// const server = http.createServer(app);
+// var socket = new net.Socket({
+//     writeable: true,
+// });
+var gSocket;
 
 // app.use(bodyParser.json());
 
@@ -28,17 +29,17 @@ conn.connect((err) => {
     console.log('Mysql Connected with App...');
 });
 
-server.listen(3002, () => {
+server.listen(58900, () => {
     console.log('opened server on %j', server.address().port);
 });
 
-socket.connect({
-    port: 58900,
-}, (error) => {
-    if (error) throw error;
-    console.log('Net socket connected...');
-    console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
-})
+// socket.connect({
+//     port: 58900,
+// }, (error) => {
+//     if (error) throw error;
+//     console.log('Net socket connected...');
+//     console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+// })
 
 // const client = net.createConnection({ port: 58900 }, () => {
 //     // 'connect' listener.
@@ -48,12 +49,19 @@ socket.connect({
 //     console.log(res)
 // });
 
-// var socket = server.on("connection", (socket) => {
-//     console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
-//     socket.setKeepAlive(true); // to keep the status connected with crestron
-//     var res = socket.write('test from Anees');
-//     console.log(res);
-// });
+var socket = server.on("connection", (socket) => {
+    console.log("Client connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    gSocket = socket;
+    gSocket.setKeepAlive(true); // to keep the status connected with crestron
+    var res = gSocket.write('test from Anees');
+    console.log(res);
+    var res2 = gSocket.write('test 2 from Anees');
+    console.log(res2);
+});
+
+setTimeout(function() {
+    console.log(gSocket.remoteAddress + ":" + gSocket.remotePort);
+}, 30000)
 
 app.get('/api/light_scene_command/:id', (req, res) => {
 
