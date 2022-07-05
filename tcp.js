@@ -10,6 +10,7 @@ server.on("connection", (socket) => {
     socket.setKeepAlive(true); // to keep the status connected with crestron\
     var res;
     process.argv.forEach(function (val, index, array) {
+      // console.log(index, val)
       if(index>1)
       {
         res = socket.write(val);

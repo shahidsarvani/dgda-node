@@ -279,8 +279,6 @@ app.get('/api/light_scene_command/:id', (req, res) => {
             res.send(apiResponse('command is sent'));
         }
     });
-
-    // res.send(apiResponse('command is sent'));
 })
 
 // app.post('/api/room/:id/play_scene', (req, res) => {
