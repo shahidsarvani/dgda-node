@@ -297,7 +297,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
             var child_argv = results.map((result) => {
                 return result.name
             })
-            res.send(apiResponse(child_argv));
+            // res.send(apiResponse(child_argv));
             let child = child_process.fork(child_script_path, child_argv)
             // res.send(apiResponse('command is sent'));
         }
@@ -306,8 +306,8 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         if (err) {
             res.send(apiResponseBad(null));
         };
-        // return res.send(apiResponse(result[0].name));
-        io.emit('change_video', result[0].name ?? '');
+        // return res.send(apiResponse(result.length));
+        io.emit('change_video', result.length ? result[0].name : '');
         res.send(apiResponse('command is sent'));
     });
 })
@@ -325,7 +325,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
             var child_argv = results.map((result) => {
                 return result.name
             })
-            res.send(apiResponse(child_argv));
+            // res.send(apiResponse(child_argv));
             let child = child_process.fork(child_script_path, child_argv)
             // res.send(apiResponse('command is sent'));
         }
@@ -334,8 +334,8 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         if (err) {
             res.send(apiResponseBad(null));
         };
-        // return res.send(apiResponse(result[0].name));
-        io.emit('change_video', result[0].name ?? '');
+        // return res.send(apiResponse(result[0].length));
+        io.emit('change_video', result.length ? result[0].name : '');
         res.send(apiResponse('command is sent'));
     });
 
