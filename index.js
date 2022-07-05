@@ -286,7 +286,13 @@ app.get('/api/light_scene_command/:id', (req, res) => {
 
 app.post('/api/room/:id/play_scene', (req, res) => {
     let sqlQuery = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
-    var lang = req.body.lang;
+    var lang;
+    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
+        lang = 'en';
+    } else {
+        lang = req.body.lang
+    }
+    // return res.send(lang);
     let sqlQuery2 = "SELECT name FROM `media` WHERE zone_id = null AND room_id = " + req.params.id + " AND lang = '" + lang + "'";
 
     // return res.send(apiResponse(sqlQuery));
@@ -298,7 +304,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
                 return result.name
             })
             // res.send(apiResponse(child_argv));
-            let child = child_process.fork(child_script_path, child_argv)
+            // let child = child_process.fork(child_script_path, child_argv)
             // res.send(apiResponse('command is sent'));
         }
     });
@@ -313,7 +319,12 @@ app.post('/api/room/:id/play_scene', (req, res) => {
 })
 
 app.post('/api/zone/:id/play_scene', (req, res) => {
-    var lang = req.body.lang;
+    var lang;
+    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
+        lang = 'en';
+    } else {
+        lang = req.body.lang
+    }
     let sqlQuery = "SELECT name FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "'";
     let sqlQuery2 = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
 
