@@ -71,7 +71,7 @@ app.get('/api/rooms', (req, res) => {
 });
 
 app.get('/api/rooms/ar', (req, res) => {
-    let sqlQuery = "SELECT id, name_ar, image_ar, has_model FROM rooms WHERE type = 1 AND status = 1 ORDER BY name";
+    let sqlQuery = "SELECT id, name_ar as name, image_ar as image, has_model FROM rooms WHERE type = 1 AND status = 1 ORDER BY name";
 
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
@@ -79,7 +79,7 @@ app.get('/api/rooms/ar', (req, res) => {
         };
         results.map(function (result) {
             // result.image = /* 'http://localhost:3001/media/images/' + */ result.image
-            result.image_ar = 'http://localhost:3001/media/images/' + result.image_ar
+            result.image = 'http://localhost:3001/media/images/' + result.image
         })
         res.send(apiResponse(results));
     });
@@ -117,15 +117,15 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
 app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
     // res.send(req.params.id);
     try {
-        let sqlQuery = "SELECT id, name_ar, image_ar FROM phases WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name_ar as name, image_ar as image FROM phases WHERE room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, phases) => {
             if (err) {
                 res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
-                phases[i].image_ar = 'http://localhost:3001/media/images/' + phases[i].image_ar
-                let sqlQuery = "SELECT id, name_ar FROM zones WHERE phase_id = " + phases[i].id;
+                phases[i].image = 'http://localhost:3001/media/images/' + phases[i].image
+                let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
                         res.send(apiResponseBad(null));
@@ -164,14 +164,14 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
 
 app.get('/api/room/:id/light_scenes/ar', (req, res) => {
     try {
-        let sqlQuery = "SELECT id, name_ar, image_ar FROM light_scenes WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name_ar as name, image_ar as image FROM light_scenes WHERE room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
                 res.send(apiResponseBad(null));
             };
             scenes.map(function (result) {
-                result.image = 'http://localhost:3001/media/images/' + result.image_ar
+                result.image = 'http://localhost:3001/media/images/' + result.image
             })
             res.send(apiResponse(scenes));
         });
@@ -199,7 +199,7 @@ app.get('/api/room/:id/zones', (req, res) => {
 
 app.get('/api/room/:id/zones/ar', (req, res) => {
     try {
-        let sqlQuery = "SELECT id, name_ar FROM zones WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
@@ -281,27 +281,58 @@ app.get('/api/light_scene_command/:id', (req, res) => {
     });
 })
 
-// app.post('/api/room/:id/play_scene', (req, res) => {
-//     // socket.on('video', (msg) => {
-//     //     io.emit('video', msg);
-//     // });
-//     res.send(apiResponse('command is sent'));
-// })
-
-app.post('/api/zone/:id/play_scene', (req, res) => {
-    // socket.on('video', (msg) => {
-    //     io.emit('video', msg);
-    // });
+app.post('/api/room/:id/play_scene', (req, res) => {
+    let sqlQuery = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
     var lang = req.body.lang;
-    let sqlQuery = "SELECT name FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "'";
+    let sqlQuery2 = "SELECT name FROM `media` WHERE zone_id = null AND room_id = " + req.params.id + " AND lang = '" + lang + "'";
 
     // return res.send(apiResponse(sqlQuery));
-    let query = conn.query(sqlQuery, (err, result) => {
+    let query = conn.query(sqlQuery, (err, results) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        } else {
+            var child_argv = results.map((result) => {
+                return result.name
+            })
+            res.send(apiResponse(child_argv));
+            let child = child_process.fork(child_script_path, child_argv)
+            // res.send(apiResponse('command is sent'));
+        }
+    });
+    let query2 = conn.query(sqlQuery2, (err, result) => {
         if (err) {
             res.send(apiResponseBad(null));
         };
         // return res.send(apiResponse(result[0].name));
         io.emit('change_video', result[0].name);
+        res.send(apiResponse('command is sent'));
+    });
+})
+
+app.post('/api/zone/:id/play_scene', (req, res) => {
+    var lang = req.body.lang;
+    let sqlQuery = "SELECT name FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "'";
+    let sqlQuery2 = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
+
+    // return res.send(apiResponse(sqlQuery2));
+    let query2 = conn.query(sqlQuery2, (err, results) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        } else {
+            var child_argv = results.map((result) => {
+                return result.name
+            })
+            res.send(apiResponse(child_argv));
+            let child = child_process.fork(child_script_path, child_argv)
+            // res.send(apiResponse('command is sent'));
+        }
+    });
+    let query = conn.query(sqlQuery, (err, result) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        };
+        // return res.send(apiResponse(result[0].name));
+        io.emit('change_video', result[0].name ?? '');
         res.send(apiResponse('command is sent'));
     });
 
