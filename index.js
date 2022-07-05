@@ -214,6 +214,9 @@ app.get('/api/room/:id/zones/ar', (req, res) => {
 });
 
 app.get('/api/model/up', (req, res) => {
+    // va
+    // let child = child_process.fork(child_script_path, child_argv)
+    // res.send(apiResponseBad(null));
     res.send(apiResponse('Model up command is sent'));
 })
 
@@ -306,7 +309,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
             res.send(apiResponseBad(null));
         };
         // return res.send(apiResponse(result[0].name));
-        io.emit('change_video', result[0].name);
+        io.emit('change_video', result[0].name ?? '');
         res.send(apiResponse('command is sent'));
     });
 })
