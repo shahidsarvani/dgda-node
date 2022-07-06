@@ -322,7 +322,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         if (err) {
             res.send(apiResponseBad(null));
         };
-        // return res.send(apiResponse(result.length));
+        // return res.send(apiResponse(result.length ? result[0].name : ''));
         io.emit('change_video', result.length ? result[0].name : '');
         io.emit('change_video_p', result.length ? result[0].name : '');
         res.send(apiResponse('command is sent'));
