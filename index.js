@@ -293,26 +293,26 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         lang = req.body.lang
     }
     // return res.send(lang);
-    let sqlQuery2 = "SELECT name FROM `media` WHERE zone_id = null AND room_id = " + req.params.id + " AND lang = '" + lang + "'";
+    let sqlQuery2 = "SELECT name FROM `media` WHERE zone_id IS null AND room_id = " + req.params.id + " AND lang = '" + lang + "'";
 
-    // return res.send(apiResponse(sqlQuery));
-    let query = conn.query(sqlQuery, (err, results) => {
-        if (err) {
-            res.send(apiResponseBad(null));
-        } else {
-            var child_argv = results.map((result) => {
-                return result.name
-            })
-            // res.send(apiResponse(child_argv));
-            // let child = child_process.fork(child_script_path, child_argv)
-            // res.send(apiResponse('command is sent'));
-        }
-    });
+    return res.send(apiResponse(sqlQuery2));
+    // let query = conn.query(sqlQuery, (err, results) => {
+    //     if (err) {
+    //         res.send(apiResponseBad(null));
+    //     } else {
+    //         var child_argv = results.map((result) => {
+    //             return result.name
+    //         })
+    //         // res.send(apiResponse(child_argv));
+    //         let child = child_process.fork(child_script_path, child_argv)
+    //         // res.send(apiResponse('command is sent'));
+    //     }
+    // });
     let query2 = conn.query(sqlQuery2, (err, result) => {
         if (err) {
             res.send(apiResponseBad(null));
         };
-        // return res.send(apiResponse(result.length));
+        // return res.send(apiResponse(result.length ? result[0].name : ''));
         io.emit('change_video', result.length ? result[0].name : '');
         res.send(apiResponse('command is sent'));
     });
