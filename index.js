@@ -45,6 +45,10 @@ app.get('/video', (req, res) => {
     res.sendFile(__dirname + '/pages/video.html');
 });
 
+app.get('/video_p', (req, res) => {
+    res.sendFile(__dirname + '/pages/video_p.html');
+});
+
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on('disconnect', () => {
@@ -227,6 +231,7 @@ app.get('/api/model/down', (req, res) => {
 app.get('/api/video/play', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video', 'play');
+    io.emit('video_p', 'play');
     // });
     res.send(apiResponse('Video play command is sent'));
 })
@@ -234,6 +239,7 @@ app.get('/api/video/play', (req, res) => {
 app.get('/api/video/pause', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video', 'pause');
+    io.emit('video_p', 'pause');
     // });
     res.send(apiResponse('Video pause command is sent'));
 })
@@ -241,6 +247,7 @@ app.get('/api/video/pause', (req, res) => {
 app.get('/api/video/stop', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video', 'stop');
+    io.emit('video_p', 'stop');
     // });
     res.send(apiResponse('Video stop command is sent'));
 })
@@ -248,6 +255,7 @@ app.get('/api/video/stop', (req, res) => {
 app.get('/api/volume/increase', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video', 'up');
+    io.emit('video_p', 'up');
     // });
     res.send(apiResponse('Volume increase command is sent'));
 })
@@ -255,6 +263,7 @@ app.get('/api/volume/increase', (req, res) => {
 app.get('/api/volume/decrease', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video', 'down');
+    io.emit('video_p', 'down');
     // });
     res.send(apiResponse('Volume decrease command is sent'));
 })
@@ -262,6 +271,7 @@ app.get('/api/volume/decrease', (req, res) => {
 app.get('/api/volume/mute', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video', 'mute');
+    io.emit('video_p', 'mute');
     // });
     res.send(apiResponse('Volume mute command is sent'));
 })
@@ -293,9 +303,9 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         lang = req.body.lang
     }
     // return res.send(lang);
-    let sqlQuery2 = "SELECT name FROM `media` WHERE zone_id = null AND room_id = " + req.params.id + " AND lang = '" + lang + "'";
+    let sqlQuery2 = "SELECT * FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "'";
 
-    // return res.send(apiResponse(sqlQuery));
+    return res.send(apiResponse(sqlQuery));
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
             res.send(apiResponseBad(null));
@@ -314,6 +324,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         };
         // return res.send(apiResponse(result.length));
         io.emit('change_video', result.length ? result[0].name : '');
+        io.emit('change_video_p', result.length ? result[0].name : '');
         res.send(apiResponse('command is sent'));
     });
 })
@@ -347,6 +358,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         };
         // return res.send(apiResponse(result[0].length));
         io.emit('change_video', result.length ? result[0].name : '');
+        io.emit('change_video_p', result.length ? result[0].name : '');
         res.send(apiResponse('command is sent'));
     });
 
