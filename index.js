@@ -63,8 +63,8 @@ app.get('/api/rooms', (req, res) => {
             res.send(apiResponseBad(null));
         };
         results.map(function (result) {
-            result.image = 'http://localhost:3001/media/images/' + result.image
-            // result.image_ar = /* 'http://localhost:3001/media/images/' + */ result.image_ar
+            result.image = 'http://192.168.10.4:3001/media/images/' + result.image
+            // result.image_ar = /* 'http://192.168.10.4:3001/media/images/' + */ result.image_ar
         })
         res.send(apiResponse(results));
     });
@@ -78,8 +78,8 @@ app.get('/api/rooms/ar', (req, res) => {
             res.send(apiResponseBad(null));
         };
         results.map(function (result) {
-            // result.image = /* 'http://localhost:3001/media/images/' + */ result.image
-            result.image = 'http://localhost:3001/media/images/' + result.image
+            // result.image = /* 'http://192.168.10.4:3001/media/images/' + */ result.image
+            result.image = 'http://192.168.10.4:3001/media/images/' + result.image
         })
         res.send(apiResponse(results));
     });
@@ -95,7 +95,7 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
                 res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
-                phases[i].image = 'http://localhost:3001/media/images/' + phases[i].image
+                phases[i].image = 'http://192.168.10.4:3001/media/images/' + phases[i].image
                 let sqlQuery = "SELECT id, name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
@@ -124,7 +124,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
                 res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
-                phases[i].image = 'http://localhost:3001/media/images/' + phases[i].image
+                phases[i].image = 'http://192.168.10.4:3001/media/images/' + phases[i].image
                 let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
@@ -152,7 +152,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
                 res.send(apiResponseBad(null));
             }
             scenes.map(function (result) {
-                result.image = 'http://localhost:3001/media/images/' + result.image_en
+                result.image = 'http://192.168.10.4:3001/media/images/' + result.image_en
             })
             res.send(apiResponse(scenes));
         });
@@ -171,7 +171,7 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
                 res.send(apiResponseBad(null));
             };
             scenes.map(function (result) {
-                result.image = 'http://localhost:3001/media/images/' + result.image
+                result.image = 'http://192.168.10.4:3001/media/images/' + result.image
             })
             res.send(apiResponse(scenes));
         });
