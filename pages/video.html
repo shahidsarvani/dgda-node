@@ -85,6 +85,13 @@
                 console.log(sock)
             }
         })
+        socket.on('change_default_video', function (msg) {
+            console.log(msg);
+            video.setAttribute('loop')
+            video.setAttribute('autoplay')
+            video.src = "../media/video/" + msg;
+            video.play();
+        })
     </script>
 </body>
 
