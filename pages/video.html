@@ -12,7 +12,7 @@
 
 <body>
     <section class="container">
-        <video class="w-100" controls id="video" muted>
+        <video class="w-100" id="video" muted loop autoplay>
             <source src="../media/video/SampleVideo_1280x720_2mb.mp4" type="video/mp4">
             <source src="../media/video/SampleVideo_1280x720_2mb.ogg" type="video/ogg">
             Your browser does not support the video tag.
@@ -38,6 +38,12 @@
                 case "stop":
                     video.pause();
                     video.currentTime = 0;
+                    break;
+                case "forward":
+                    video.currentTime += 10;
+                    break;
+                case "backward":
+                    video.currentTime -= 10;
                     break;
                 case "up":
                     if (video.volume == 1) {
