@@ -5,10 +5,12 @@ const mysql = require('mysql');
 const cors = require('cors');
 const http = require('http');
 const server = http.createServer(app);
+const crestServer = http.createServer();
 const { Server } = require("socket.io");
 const io = new Server(server);
-const child_process = require('child_process');
-const child_script_path = 'tcp.js';
+//const child_process = require('child_process');
+//const child_script_path = 'tcp.js';
+var crestSocket;
 
 app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
@@ -57,6 +59,13 @@ io.on('connection', (socket) => {
     socket.on('video', (msg) => {
         io.emit('video', msg);
     });
+});
+
+crestServer.on("connection", (socket) => {
+    console.log("Crestron connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    crestSocket = socket;
+    socket.setKeepAlive(true); // to keep the status connected with crestron
+    crestSocket.setKeepAlive(true);
 });
 
 app.get('/api/rooms', (req, res) => {
@@ -288,7 +297,12 @@ app.get('/api/light_scene_command/:id', (req, res) => {
                 return result.name
             })
             // res.send(apiResponse(child_argv));
-            let child = child_process.fork(child_script_path, child_argv)
+            //let child = child_process.fork(child_script_path, child_argv)
+            var r;
+            child_argv.forEach(function(item) {
+                r = crestSocket.write(item);
+                console.log("Command sent to crestron with status: " + r);
+            });
             res.send(apiResponse('command is sent'));
         }
     });
@@ -306,18 +320,23 @@ app.post('/api/room/:id/play_scene', (req, res) => {
     let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "'";
 
     // return res.send(apiResponse(sqlQuery2));
-    // let query = conn.query(sqlQuery, (err, results) => {
-    //     if (err) {
-    //         res.send(apiResponseBad(null));
-    //     } else {
-    //         var child_argv = results.map((result) => {
-    //             return result.name
-    //         })
-    //         // res.send(apiResponse(child_argv));
-    //         let child = child_process.fork(child_script_path, child_argv)
-    //         // res.send(apiResponse('command is sent'));
-    //     }
-    // });
+    let query = conn.query(sqlQuery, (err, results) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        } else {
+            var child_argv = results.map((result) => {
+                return result.name
+            })
+            // res.send(apiResponse(child_argv));
+            //let child = child_process.fork(child_script_path, child_argv)
+            var r;
+            child_argv.forEach(function(item) {
+                r = crestSocket.write(item);
+                console.log("Command sent to crestron with status: " + r);
+            });
+            // res.send(apiResponse('command is sent'));
+        }
+    });
     let query2 = conn.query(sqlQuery2, (err, results) => {
         if (err) {
             res.send(apiResponseBad(null));
@@ -363,8 +382,13 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
                 return result.name
             })
             // res.send(apiResponse(child_argv));
-            let child = child_process.fork(child_script_path, child_argv)
-            // res.send(apiResponse('command is sent'));
+            //let child = child_process.fork(child_script_path, child_argv)
+            var r;
+            child_argv.forEach(function(item) {
+                r = crestSocket.write(item);
+                console.log("Command sent to crestron with status: " + r);
+            });
+            //res.send(apiResponse('command is sent'));
         }
     });
     let query = conn.query(sqlQuery, (err, results) => {
@@ -399,11 +423,13 @@ app.get('/api/test', (req, res) => {
         'test',
         'test2'
     ]
-    // const child_execArgv = [
-    //   '--use-strict'
-    // ]
 
-    let child = child_process.fork(child_script_path, child_argv)
+    //let child = child_process.fork(child_script_path, child_argv)
+    var r;
+    child_argv.forEach(function(item) {
+        r = crestSocket.write(item);
+        console.log("Command sent to crestron with status: " + r);
+    });
     res.send(apiResponseBad(null));
 })
 
@@ -418,5 +444,9 @@ function apiResponseBad(results) {
 }
 
 server.listen(3001, () => {
-    console.log('Server started on port 3001...');
+    console.log('App Server started on port  %j', server.address().port);
+});
+
+crestServer.listen(58900, () => {
+    console.log('Crestron Server started on port %j', crestServer.address().port);
 });
