@@ -37,7 +37,8 @@
                     break;
                 case "stop":
                     video.pause();
-                    video.currentTime = 0;
+                    socket.emit('default_video', 'start');
+                    // video.currentTime = 0;
                     break;
                 case "forward":
                     video.currentTime += 10;
