@@ -72,9 +72,9 @@ io.on('connection', (socket) => {
     socket.on('default_video', (msg) => {
         console.log(msg)
         console.log('show ended')
-        let sqlQuery = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
+        let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
         // return res.send(lang);
-        let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.lang = 'ar'";
+        let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 AND media.lang = " + msg[2];
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
                 console.log(err)
@@ -87,8 +87,10 @@ io.on('connection', (socket) => {
                 //let child = child_process.fork(child_script_path, child_argv)
                 var r;
                 child_argv.forEach(function (item) {
-                    r = crestSocket.write(item);
-                    console.log("Command sent to crestron with status: " + r);
+                    setTimeout(function () {
+                        r = crestSocket.write(item);
+                        console.log("Command sent to crestron with status: " + r);
+                    }, results[index].delay)
                 });
                 // res.send(apiResponse('command is sent'));
             }
@@ -395,30 +397,34 @@ app.post('/api/room/:id/play_scene', (req, res) => {
             // res.send(apiResponse('command is sent'));
         }
     });
-    // let query2 = conn.query(sqlQuery2, (err, results) => {
-    //     if (err) {
-    //         res.send(apiResponseBad(null));
-    //     };
-    //     // return res.send(apiResponse(results));
-    //     var p_video = '';
-    //     for (var i = 0; i < results.length; i++) {
-    //         if (results[i].is_projector) {
-    //             p_video = results[i].name
-    //             break;
-    //         }
-    //     }
-    //     var w_video = '';
-    //     for (var i = 0; i < results.length; i++) {
-    //         if (!results[i].is_projector) {
-    //             w_video = results[i].name
-    //             break;
-    //         }
-    //     }
-    //     // return res.send(apiResponse(w_video));
-    //     io.emit('change_video', w_video);
-    //     io.emit('change_video_p', p_video);
-    //     res.send(apiResponse('command is sent'));
-    // });
+    let query2 = conn.query(sqlQuery2, (err, results) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        };
+        // return res.send(apiResponse(results));
+        var p_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].is_projector) {
+                p_video = results[i].name
+                break;
+            }
+        }
+        var w_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
+                w_video = [
+                    results[i].name,
+                    req.params.id,
+                    lang
+                ]
+                break;
+            }
+        }
+        // return res.send(apiResponse(w_video));
+        io.emit('change_video', w_video);
+        io.emit('change_video_p', p_video);
+        res.send(apiResponse('command is sent'));
+    });
 })
 
 app.post('/api/zone/:id/play_scene', (req, res) => {

@@ -78,11 +78,11 @@
             console.log(msg);
             video.removeAttribute('loop')
             video.removeAttribute('autoplay')
-            video.src = "../media/video/" + msg;
+            video.src = "../media/video/" + msg[0];
             video.play();
             video.onended = () => {
                 console.log('video ended')
-                var sock = socket.emit('default_video', 'start');
+                var sock = socket.emit('default_video', msg);
                 console.log(sock)
             }
         })
