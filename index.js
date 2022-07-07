@@ -363,9 +363,7 @@ app.get('/api/light_scene_command/:id', (req, res) => {
 })
 
 app.post('/api/room/:id/play_scene', (req, res) => {
-    var timeOut = 10;
-
-    let sqlQuery = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
+    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
     var lang;
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
         lang = 'en';
@@ -380,32 +378,19 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         if (err) {
             res.send(apiResponseBad(null));
         } else {
-            let sqlQuery3 = "SELECT delay FROM settings WHERE id = 1";
-            let query3 = conn.query(sqlQuery3, (err, result) => {
-                if (err) {
-                    res.send(apiResponseBad(null));
-                } else {
-                    // return res.send(apiResponse(result));
-                    timeOut = result.delay;
-                    // var child_argv = results.map((result) => {
-                    //     return result.name
-                    // })
-                }
-            });
             // return res.send(apiResponseBad(timeOut));
-            
+
             var child_argv = results.map((result) => {
-                return {
-                    'command': result.name,
-                    'timeOut': timeOut
-                }
+                return result.name
             })
-            return res.send(apiResponse(child_argv));
+            // return res.send(apiResponse(child_argv));
             //let child = child_process.fork(child_script_path, child_argv)
             var r;
-            child_argv.forEach(function (item) {
-                r = crestSocket.write(item);
-                console.log("Command sent to crestron with status: " + r);
+            child_argv.forEach(function (item, index) {
+                setTimeout(function () {
+                    r = crestSocket.write(item);
+                    console.log("Command sent to crestron with status: " + r);
+                }, results[index].delay)
             });
             // res.send(apiResponse('command is sent'));
         }
