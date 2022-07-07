@@ -65,9 +65,9 @@ io.on('connection', (socket) => {
     socket.on('default_video', (msg) => {
         console.log(msg)
         console.log('show ended')
-        let sqlQuery = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
+        let sqlQuery = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
         // return res.send(lang);
-        let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + req.params.id + " AND scenes.is_default = 1 AND media.lang = '" + lang + "'";
+        let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.lang = 'ar'";
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
                 res.send(apiResponseBad(null));
