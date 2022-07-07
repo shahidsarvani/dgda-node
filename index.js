@@ -8,7 +8,6 @@ const net = require('net');
 const server = http.createServer(app);
 const crestServer = net.createServer();
 const { Server } = require("socket.io");
-const { MessagePort } = require('worker_threads');
 const io = new Server(server);
 //const child_process = require('child_process');
 //const child_script_path = 'tcp.js';
@@ -364,6 +363,8 @@ app.get('/api/light_scene_command/:id', (req, res) => {
 })
 
 app.post('/api/room/:id/play_scene', (req, res) => {
+    var timeOut = 10;
+
     let sqlQuery = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
     var lang;
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
@@ -371,7 +372,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
     } else {
         lang = req.body.lang
     }
-    // return res.send(lang);
+    // return res.send(sqlQuery);
     let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "'";
 
     // return res.send(apiResponse(sqlQuery2));
@@ -379,10 +380,27 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         if (err) {
             res.send(apiResponseBad(null));
         } else {
+            let sqlQuery3 = "SELECT delay FROM settings WHERE id = 1";
+            let query3 = conn.query(sqlQuery3, (err, result) => {
+                if (err) {
+                    res.send(apiResponseBad(null));
+                } else {
+                    // return res.send(apiResponse(result));
+                    timeOut = result.delay;
+                    // var child_argv = results.map((result) => {
+                    //     return result.name
+                    // })
+                }
+            });
+            // return res.send(apiResponseBad(timeOut));
+            
             var child_argv = results.map((result) => {
-                return result.name
+                return {
+                    'command': result.name,
+                    'timeOut': timeOut
+                }
             })
-            // res.send(apiResponse(child_argv));
+            return res.send(apiResponse(child_argv));
             //let child = child_process.fork(child_script_path, child_argv)
             var r;
             child_argv.forEach(function (item) {
@@ -392,30 +410,30 @@ app.post('/api/room/:id/play_scene', (req, res) => {
             // res.send(apiResponse('command is sent'));
         }
     });
-    let query2 = conn.query(sqlQuery2, (err, results) => {
-        if (err) {
-            res.send(apiResponseBad(null));
-        };
-        // return res.send(apiResponse(results));
-        var p_video = '';
-        for (var i = 0; i < results.length; i++) {
-            if (results[i].is_projector) {
-                p_video = results[i].name
-                break;
-            }
-        }
-        var w_video = '';
-        for (var i = 0; i < results.length; i++) {
-            if (!results[i].is_projector) {
-                w_video = results[i].name
-                break;
-            }
-        }
-        // return res.send(apiResponse(w_video));
-        io.emit('change_video', w_video);
-        io.emit('change_video_p', p_video);
-        res.send(apiResponse('command is sent'));
-    });
+    // let query2 = conn.query(sqlQuery2, (err, results) => {
+    //     if (err) {
+    //         res.send(apiResponseBad(null));
+    //     };
+    //     // return res.send(apiResponse(results));
+    //     var p_video = '';
+    //     for (var i = 0; i < results.length; i++) {
+    //         if (results[i].is_projector) {
+    //             p_video = results[i].name
+    //             break;
+    //         }
+    //     }
+    //     var w_video = '';
+    //     for (var i = 0; i < results.length; i++) {
+    //         if (!results[i].is_projector) {
+    //             w_video = results[i].name
+    //             break;
+    //         }
+    //     }
+    //     // return res.send(apiResponse(w_video));
+    //     io.emit('change_video', w_video);
+    //     io.emit('change_video_p', p_video);
+    //     res.send(apiResponse('command is sent'));
+    // });
 })
 
 app.post('/api/zone/:id/play_scene', (req, res) => {

@@ -69,6 +69,22 @@
         });
         socket.on('change_video_p', function (msg) {
             console.log(msg);
+            video.removeAttribute('loop')
+            video.removeAttribute('autoplay')
+            video.src = "../media/video/" + msg;
+            video.play();
+        })
+        socket.on('change_video_p', function (msg) {
+            console.log(msg);
+            video.removeAttribute('loop')
+            video.removeAttribute('autoplay')
+            video.src = "../media/video/" + msg;
+            video.play();
+        })
+        socket.on('change_default_video_p', function (msg) {
+            console.log(msg);
+            video.setAttribute('loop')
+            video.setAttribute('autoplay')
             video.src = "../media/video/" + msg;
             video.play();
         })
