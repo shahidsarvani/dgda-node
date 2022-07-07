@@ -70,7 +70,8 @@ io.on('connection', (socket) => {
         let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.lang = 'ar'";
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
-                res.send(apiResponseBad(null));
+                console.log(err)
+                // res.send(apiResponseBad(null));
             } else {
                 var child_argv = results.map((result) => {
                     return result.name
@@ -87,7 +88,8 @@ io.on('connection', (socket) => {
         });
         let query2 = conn.query(sqlQuery2, (err, results) => {
             if (err) {
-                res.send(apiResponseBad(null));
+                console.log(err)
+                // res.send(apiResponseBad(null));
             };
             // return res.send(apiResponse(results));
             var p_video = '';
@@ -107,7 +109,8 @@ io.on('connection', (socket) => {
             // return res.send(apiResponse(w_video));
             io.emit('change_default_video', w_video);
             io.emit('change_default_video_p', p_video);
-            res.send(apiResponse('command is sent'));
+            // res.send(apiResponse('command is sent'));
+            console.log('command is sent')
         });
     })
 });
