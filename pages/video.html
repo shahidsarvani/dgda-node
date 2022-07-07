@@ -78,6 +78,9 @@
             video.src = "../media/video/" + msg;
             video.play();
         })
+        video.onended = () => {
+            socket.emit('default_video', 'start');
+        }
     </script>
 </body>
 

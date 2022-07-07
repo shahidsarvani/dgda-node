@@ -7,6 +7,7 @@ const http = require('http');
 const server = http.createServer(app);
 const crestServer = http.createServer();
 const { Server } = require("socket.io");
+const { MessagePort } = require('worker_threads');
 const io = new Server(server);
 //const child_process = require('child_process');
 //const child_script_path = 'tcp.js';
@@ -416,6 +417,11 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         res.send(apiResponse('command is sent'));
     });
 
+})
+
+io.on('default_video', (msg) => {
+    console.log(MessagePort)
+    console.log('show ended')
 })
 
 app.get('/api/test', (req, res) => {
