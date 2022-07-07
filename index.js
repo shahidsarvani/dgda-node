@@ -53,6 +53,14 @@ app.get('/video_p', (req, res) => {
     res.sendFile(__dirname + '/pages/video_p.html');
 });
 
+
+crestServer.on("connection", (socket) => {
+    console.log("Crestron connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    crestSocket = socket;
+    socket.setKeepAlive(true); // to keep the status connected with crestron
+    crestSocket.setKeepAlive(true);
+});
+
 io.on('connection', (socket) => {
     console.log('a user connected');
     socket.on('disconnect', () => {
@@ -113,13 +121,6 @@ io.on('connection', (socket) => {
             console.log('command is sent')
         });
     })
-});
-
-crestServer.on("connection", (socket) => {
-    console.log("Crestron connection details - ", socket.remoteAddress + ":" + socket.remotePort);
-    crestSocket = socket;
-    socket.setKeepAlive(true); // to keep the status connected with crestron
-    crestSocket.setKeepAlive(true);
 });
 
 app.get('/api/rooms', (req, res) => {
