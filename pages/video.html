@@ -80,7 +80,9 @@
             video.src = "../media/video/" + msg;
             video.play();
             video.onended = () => {
-                socket.emit('default_video', 'start');
+                console.log('video ended')
+                var sock = socket.emit('default_video', 'start');
+                console.log(sock)
             }
         })
     </script>
