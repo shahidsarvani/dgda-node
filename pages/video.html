@@ -75,6 +75,8 @@
         });
         socket.on('change_video', function (msg) {
             console.log(msg);
+            video.removeAttribute('loop')
+            video.removeAttribute('autoplay')
             video.src = "../media/video/" + msg;
             video.play();
         })
