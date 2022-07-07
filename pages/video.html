@@ -79,10 +79,10 @@
             video.removeAttribute('autoplay')
             video.src = "../media/video/" + msg;
             video.play();
+            video.onended = () => {
+                socket.emit('default_video', 'start');
+            }
         })
-        video.onended = () => {
-            socket.emit('default_video', 'start');
-        }
     </script>
 </body>
 
