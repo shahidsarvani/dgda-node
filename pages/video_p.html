@@ -39,6 +39,12 @@
                     video.pause();
                     video.currentTime = 0;
                     break;
+                case "forward":
+                    video.currentTime += 10;
+                    break;
+                case "back":
+                    video.currentTime -= 10;
+                    break;
                 case "up":
                     if (video.volume == 1) {
                         video.muted = false;
