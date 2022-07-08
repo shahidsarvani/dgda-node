@@ -35,11 +35,6 @@
                 case "pause":
                     video.pause();
                     break;
-                case "stop":
-                    video.pause();
-                    socket.emit('default_video', 'start');
-                    // video.currentTime = 0;
-                    break;
                 case "forward":
                     video.currentTime += 10;
                     break;
@@ -78,6 +73,18 @@
             console.log(msg);
             video.removeAttribute('loop')
             video.removeAttribute('autoplay')
+            video.src = "../media/video/" + msg[0];
+            video.play();
+            video.onended = () => {
+                console.log('video ended')
+                var sock = socket.emit('default_video', msg);
+                console.log(sock)
+            }
+        })
+        socket.on('video_stop', function (msg) {
+            console.log(msg);
+            video.setAttribute('loop')
+            video.setAttribute('autoplay')
             video.src = "../media/video/" + msg[0];
             video.play();
             video.onended = () => {

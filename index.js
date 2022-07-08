@@ -293,7 +293,7 @@ app.get('/api/model/down', (req, res) => {
     res.send(apiResponse('Model down command is sent'));
 })
 
-app.get('/api/video/play', (req, res) => {
+app.get('/api/room/:id/video/resume', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video', 'play');
     io.emit('video_p', 'play');
@@ -301,7 +301,7 @@ app.get('/api/video/play', (req, res) => {
     res.send(apiResponse('Video play command is sent'));
 })
 
-app.get('/api/video/pause', (req, res) => {
+app.get('/api/room/:id/video/pause', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video', 'pause');
     io.emit('video_p', 'pause');
@@ -309,11 +309,20 @@ app.get('/api/video/pause', (req, res) => {
     res.send(apiResponse('Video pause command is sent'));
 })
 
-app.get('/api/video/stop', (req, res) => {
-    // socket.on('video', (msg) => {
+app.post('/api/room/:id/video/stop', (req, res) => {
+    var lang;
+    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
+        lang = 'en';
+    } else {
+        lang = req.body.lang
+    }
+    var msg = [
+        'stop',
+        req.params.id,
+        lang
+    ]
+    io.emit('video_stop', msg);
     io.emit('video', 'stop');
-    io.emit('video_p', 'stop');
-    // });
     res.send(apiResponse('Video stop command is sent'));
 })
 
@@ -365,6 +374,69 @@ app.get('/api/light_scene_command/:id', (req, res) => {
 })
 
 app.post('/api/room/:id/play_scene', (req, res) => {
+    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
+    var lang;
+    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
+        lang = 'en';
+    } else {
+        lang = req.body.lang
+    }
+    // return res.send(sqlQuery);
+    let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "'";
+
+    // return res.send(apiResponse(sqlQuery2));
+    let query = conn.query(sqlQuery, (err, results) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        } else {
+            // return res.send(apiResponseBad(timeOut));
+
+            var child_argv = results.map((result) => {
+                return result.name
+            })
+            // return res.send(apiResponse(child_argv));
+            //let child = child_process.fork(child_script_path, child_argv)
+            var r;
+            child_argv.forEach(function (item, index) {
+                setTimeout(function () {
+                    r = crestSocket.write(item);
+                    console.log("Command sent to crestron with status: " + r);
+                }, results[index].delay)
+            });
+            // res.send(apiResponse('command is sent'));
+        }
+    });
+    let query2 = conn.query(sqlQuery2, (err, results) => {
+        if (err) {
+            res.send(apiResponseBad(null));
+        };
+        // return res.send(apiResponse(results));
+        var p_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].is_projector) {
+                p_video = results[i].name
+                break;
+            }
+        }
+        var w_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
+                w_video = [
+                    results[i].name,
+                    req.params.id,
+                    lang
+                ]
+                break;
+            }
+        }
+        // return res.send(apiResponse(w_video));
+        io.emit('change_video', w_video);
+        io.emit('change_video_p', p_video);
+        res.send(apiResponse('command is sent'));
+    });
+})
+
+app.post('/api/room/:id/restart_scene', (req, res) => {
     let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
     var lang;
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
