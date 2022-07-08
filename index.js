@@ -570,9 +570,9 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
 
 })
 
-app.get('/api/video/get_status', (req, res) => {
-    
-})
+// app.get('/api/video/get_status', (req, res) => {
+
+// })
 
 
 app.get('/api/test', (req, res) => {
