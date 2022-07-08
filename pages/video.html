@@ -82,16 +82,14 @@
             }
         })
         socket.on('video_stop', function (msg) {
-            console.log(msg);
-            video.setAttribute('loop')
-            video.setAttribute('autoplay')
-            video.src = "../media/video/" + msg[0];
-            video.play();
-            video.onended = () => {
-                console.log('video ended')
-                var sock = socket.emit('default_video', msg);
-                console.log(sock)
-            }
+            // console.log(msg);
+            // video.setAttribute('loop')
+            // video.setAttribute('autoplay')
+            // video.src = "../media/video/" + msg[0];
+            video.pause();
+            video.currentTime = 0;
+            console.log(msg)
+            socket.emit('default_video', msg);
         })
         socket.on('change_default_video', function (msg) {
             console.log(msg);

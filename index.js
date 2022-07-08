@@ -73,18 +73,16 @@ io.on('connection', (socket) => {
         console.log(msg)
         console.log('show ended')
         let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
-        // return res.send(lang);
-        let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 AND media.lang = " + msg[2];
+        let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 AND media.lang = '" + msg[2] + "'";
+        // console.log(sqlQuery2);
+        // return;
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
                 console.log(err)
-                // res.send(apiResponseBad(null));
             } else {
                 var child_argv = results.map((result) => {
                     return result.name
                 })
-                // res.send(apiResponse(child_argv));
-                //let child = child_process.fork(child_script_path, child_argv)
                 var r;
                 child_argv.forEach(function (item, index) {
                     setTimeout(function () {
@@ -92,15 +90,14 @@ io.on('connection', (socket) => {
                         console.log("Command sent to crestron with status: " + r);
                     }, results[index].delay)
                 });
-                // res.send(apiResponse('command is sent'));
             }
         });
         let query2 = conn.query(sqlQuery2, (err, results) => {
             if (err) {
                 console.log(err)
-                // res.send(apiResponseBad(null));
             };
-            // return res.send(apiResponse(results));
+            // console.log(apiResponse(results))
+            return;
             var p_video = '';
             for (var i = 0; i < results.length; i++) {
                 if (results[i].is_projector) {
@@ -115,10 +112,8 @@ io.on('connection', (socket) => {
                     break;
                 }
             }
-            // return res.send(apiResponse(w_video));
             io.emit('change_default_video', w_video);
             io.emit('change_default_video_p', p_video);
-            // res.send(apiResponse('command is sent'));
             console.log('command is sent')
         });
     })
@@ -337,8 +332,9 @@ app.post('/api/room/:id/video/stop', (req, res) => {
         req.params.id,
         lang
     ]
+    // return res.send(apiResponse(msg[1]));
     io.emit('video_stop', msg);
-    io.emit('video', 'stop');
+    io.emit('video_p', 'stop');
     res.send(apiResponse('Video stop command is sent'));
 })
 
