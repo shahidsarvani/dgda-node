@@ -434,27 +434,27 @@ app.post('/api/room/:id/play_scene', (req, res) => {
     let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "'";
 
     // return res.send(apiResponse(sqlQuery2));
-    let query = conn.query(sqlQuery, (err, results) => {
-        if (err) {
-            return res.send(apiResponseBad(null));
-        } else {
-            // return res.send(apiResponseBad(timeOut));
+    // let query = conn.query(sqlQuery, (err, results) => {
+    //     if (err) {
+    //         return res.send(apiResponseBad(null));
+    //     } else {
+    //         // return res.send(apiResponseBad(timeOut));
 
-            var child_argv = results.map((result) => {
-                return result.name
-            })
-            // return res.send(apiResponse(child_argv));
-            //let child = child_process.fork(child_script_path, child_argv)
-            var r;
-            child_argv.forEach(function (item, index) {
-                setTimeout(function () {
-                    r = crestSocket.write(item);
-                    console.log("Command sent to crestron with status: " + r);
-                }, results[index].delay)
-            });
-            // res.send(apiResponse('command is sent'));
-        }
-    });
+    //         var child_argv = results.map((result) => {
+    //             return result.name
+    //         })
+    //         // return res.send(apiResponse(child_argv));
+    //         //let child = child_process.fork(child_script_path, child_argv)
+    //         var r;
+    //         child_argv.forEach(function (item, index) {
+    //             setTimeout(function () {
+    //                 r = crestSocket.write(item);
+    //                 console.log("Command sent to crestron with status: " + r);
+    //             }, results[index].delay)
+    //         });
+    //         // res.send(apiResponse('command is sent'));
+    //     }
+    // });
     let query2 = conn.query(sqlQuery2, (err, results) => {
         if (err) {
             return res.send(apiResponseBad(null));
