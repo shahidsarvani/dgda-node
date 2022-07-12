@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Video</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
+</head>
+
+<body>
+    <section class="container">
+        <video class="w-100" id="video" muted autoplay loop>
+            <source src="../media/video/SampleVideo_1280x720_2mb.mp4" type="video/mp4">
+            <source src="../media/video/SampleVideo_1280x720_2mb.ogg" type="video/ogg">
+            Your browser does not support the video tag.
+        </video>
+    </section>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io();
+        var video = document.getElementById('video')
+        // socket.on('play', function (msg) {
+        //     video.play();
+        // })
+        socket.on('video_p', function (msg) {
+            console.log(msg)
+            switch (msg) {
+                case "play":
+                    video.play();
+                    break;
+                case "pause":
+                    video.pause();
+                    break;
+                case "stop":
+                    video.pause();
+                    video.currentTime = 0;
+                    break;
+                case "forward":
+                    video.currentTime += 10;
+                    break;
+                case "back":
+                    video.currentTime -= 10;
+                    break;
+                case "up":
+                    if (video.volume == 1) {
+                        video.muted = false;
+                        video.volume = 1;
+                    }
+                    if (video.volume < 1) {
+                        video.muted = false;
+                        video.volume += 0.1;
+                    }
+                    break;
+                case "down":
+                    if (video.volume == 0 || video.muted == true) {
+                        video.volume = 0;
+                        video.muted = true;
+                    } else if (video.volume > 0) {
+                        video.muted = false;
+                        video.volume -= 0.1;
+                    }
+                    break;
+                case "mute":
+                    video.muted = true;
+                    video.volume = 0;
+                    break;
+                default:
+                    console.log('Error!')
+                    break;
+            }
+        });
+        socket.on('change_video_p', function (msg) {
+            console.log(msg);
+            video.removeAttribute('loop')
+            video.removeAttribute('autoplay')
+            video.src = "../media/video/" + msg;
+            video.play();
+        })
+        socket.on('change_default_video_p', function (msg) {
+            console.log(msg);
+            video.setAttribute('loop')
+            video.setAttribute('autoplay')
+            video.src = "../media/video/" + msg;
+            video.play();
+        })
+    </script>
+</body>
+
+</html>
