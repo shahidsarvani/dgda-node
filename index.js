@@ -553,6 +553,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         };
         // return res.send(apiResponse(results));
         var p_video = '';
+        var duration = 0;
         for (var i = 0; i < results.length; i++) {
             if (results[i].is_projector) {
                 p_video = results[i].name
@@ -567,13 +568,14 @@ app.post('/api/room/:id/play_scene', (req, res) => {
                     req.params.id,
                     lang
                 ]
+                duration = results[i].duration
                 break;
             }
         }
         // return res.send(apiResponse(w_video));
         io.emit('change_video', w_video);
         io.emit('change_video_p', p_video);
-        return res.send(apiResponse('command is sent'));
+        return res.send(apiResponse(duration));
     });
 })
 
