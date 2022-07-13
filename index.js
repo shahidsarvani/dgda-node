@@ -174,22 +174,24 @@ io.on('connection', (socket) => {
         let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 AND media.lang = '" + msg[2] + "'";
         // console.log(sqlQuery2);
         // return;
-        let query = conn.query(sqlQuery, (err, results) => {
-            if (err) {
-                console.log(err)
-            } else {
-                var child_argv = results.map((result) => {
-                    return result.name
-                })
-                var r;
-                child_argv.forEach(function (item, index) {
-                    setTimeout(function () {
-                        r = crestSocket.write(item);
-                        console.log("Command sent to crestron with status: " + r);
-                    }, results[index].delay)
-                });
-            }
-        });
+        if (process.env.APP_ENV == 'prod') {
+            let query = conn.query(sqlQuery, (err, results) => {
+                if (err) {
+                    console.log(err)
+                } else {
+                    var child_argv = results.map((result) => {
+                        return result.name
+                    })
+                    var r;
+                    child_argv.forEach(function (item, index) {
+                        setTimeout(function () {
+                            r = crestSocket.write(item);
+                            console.log("Command sent to crestron with status: " + r);
+                        }, results[index].delay)
+                    });
+                }
+            });
+        }
         let query2 = conn.query(sqlQuery2, (err, results) => {
             if (err) {
                 console.log(err)
@@ -210,8 +212,16 @@ io.on('connection', (socket) => {
                     break;
                 }
             }
-            io.emit('change_default_video', w_video);
-            io.emit('change_default_video_p', p_video);
+
+            if (msg[1] == 1) {
+                io.emit('change_default_video_wsw', w_video);
+                io.emit('change_default_video_wsp', p_video);
+            } else {
+                io.emit('change_default_video_dw', w_video);
+                io.emit('change_default_video_dp', p_video);
+            }
+            // io.emit('change_default_video', w_video);
+            // io.emit('change_default_video_p', p_video);
             console.log('command is sent')
         });
     })
@@ -225,7 +235,7 @@ app.get('/api/rooms', (req, res) => {
             res.send(apiResponseBad(null));
         };
         results.map(function (result) {
-            if(process.env.APP_ENV == 'local') {
+            if (process.env.APP_ENV == 'local') {
                 result.image = 'http://localhost:3001/media/images/' + result.image
             } else {
                 result.image = 'http://192.168.10.4:3001/media/images/' + result.image
@@ -246,7 +256,7 @@ app.get('/api/rooms/ar', (req, res) => {
         results.map(function (result) {
             // result.image = /* 'http://192.168.10.4:3001/media/images/' + */ result.image
             // result.image = 'http://192.168.10.4:3001/media/images/' + result.image
-            if(process.env.APP_ENV == 'local') {
+            if (process.env.APP_ENV == 'local') {
                 result.image = 'http://localhost:3001/media/images/' + result.image
             } else {
                 result.image = 'http://192.168.10.4:3001/media/images/' + result.image
@@ -266,7 +276,7 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
                 res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
-                if(process.env.APP_ENV == 'local') {
+                if (process.env.APP_ENV == 'local') {
                     phases[i].image = 'http://localhost:3001/media/images/' + phases[i].image
                 } else {
                     phases[i].image = 'http://192.168.10.4:3001/media/images/' + phases[i].image
@@ -300,7 +310,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
                 res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
-                if(process.env.APP_ENV == 'local') {
+                if (process.env.APP_ENV == 'local') {
                     phases[i].image = 'http://localhost:3001/media/images/' + phases[i].image
                 } else {
                     phases[i].image = 'http://192.168.10.4:3001/media/images/' + phases[i].image
@@ -333,7 +343,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
                 res.send(apiResponseBad(null));
             }
             scenes.map(function (result) {
-                if(process.env.APP_ENV == 'local') {
+                if (process.env.APP_ENV == 'local') {
                     result.image = 'http://localhost:3001/media/images/' + result.image_en
                 } else {
                     result.image = 'http://192.168.10.4:3001/media/images/' + result.image_en
@@ -357,7 +367,7 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
                 res.send(apiResponseBad(null));
             };
             scenes.map(function (result) {
-                if(process.env.APP_ENV == 'local') {
+                if (process.env.APP_ENV == 'local') {
                     result.image = 'http://localhost:3001/media/images/' + result.image
                 } else {
                     result.image = 'http://192.168.10.4:3001/media/images/' + result.image
@@ -524,13 +534,13 @@ app.post('/api/room/:id/play_scene', (req, res) => {
     let sqlQuery2 = "SELECT media.name, media.is_projector, media.duration FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "'";
 
     // return res.send(apiResponse(sqlQuery2));
-    if(process.env.APP_ENV == 'prod') {
+    if (process.env.APP_ENV == 'prod') {
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
                 return res.send(apiResponseBad(null));
             } else {
                 // return res.send(apiResponseBad(timeOut));
-    
+
                 var child_argv = results.map((result) => {
                     return result.name
                 })
@@ -573,8 +583,13 @@ app.post('/api/room/:id/play_scene', (req, res) => {
             }
         }
         // return res.send(apiResponse(w_video));
-        io.emit('change_video', w_video);
-        io.emit('change_video_p', p_video);
+        if (req.params.id == 1) {
+            io.emit('change_video_wsw', w_video);
+            io.emit('change_video_wsp', p_video);
+        } else {
+            io.emit('change_video_dw', w_video);
+            io.emit('change_video_dp', p_video);
+        }
         return res.send(apiResponse(duration));
     });
 })
@@ -590,29 +605,32 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     let sqlQuery2 = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
 
     // return res.send(apiResponse(sqlQuery2));
-    let query2 = conn.query(sqlQuery2, (err, results) => {
-        if (err) {
-            res.send(apiResponseBad(null));
-        } else {
-            var child_argv = results.map((result) => {
-                return result.name
-            })
-            // res.send(apiResponse(child_argv));
-            //let child = child_process.fork(child_script_path, child_argv)
-            var r;
-            child_argv.forEach(function (item) {
-                r = crestSocket.write(item);
-                console.log("Command sent to crestron with status: " + r);
-            });
-            //res.send(apiResponse('command is sent'));
-        }
-    });
+    if (process.env.APP_ENV == 'prod') {
+        let query2 = conn.query(sqlQuery2, (err, results) => {
+            if (err) {
+                res.send(apiResponseBad(null));
+            } else {
+                var child_argv = results.map((result) => {
+                    return result.name
+                })
+                // res.send(apiResponse(child_argv));
+                //let child = child_process.fork(child_script_path, child_argv)
+                var r;
+                child_argv.forEach(function (item) {
+                    r = crestSocket.write(item);
+                    console.log("Command sent to crestron with status: " + r);
+                });
+                //res.send(apiResponse('command is sent'));
+            }
+        });
+    }
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
             res.send(apiResponseBad(null));
         };
         // return res.send(apiResponse(results));
         var p_video = '';
+        var duration = 0;
         for (var i = 0; i < results.length; i++) {
             if (results[i].is_projector) {
                 p_video = results[i].name
@@ -623,13 +641,21 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         for (var i = 0; i < results.length; i++) {
             if (!results[i].is_projector) {
                 w_video = results[i].name
+                duration = results[i].duration
                 break;
             }
         }
         // return res.send(apiResponse(w_video));
-        io.emit('change_video', w_video);
-        io.emit('change_video_p', p_video);
-        res.send(apiResponse('command is sent'));
+        if (req.params.id == 1) {
+            io.emit('change_video_wsw', w_video);
+            io.emit('change_video_wsp', p_video);
+        } else {
+            io.emit('change_video_dw', w_video);
+            io.emit('change_video_dp', p_video);
+        }
+        // io.emit('change_video', w_video);
+        // io.emit('change_video_p', p_video);
+        res.send(apiResponse());
     });
 
 })
@@ -666,7 +692,7 @@ function apiResponseBad(results) {
 
 server.listen(3001, () => {
     console.log('App Server started on port  %j', server.address().port);
-    console.log(process.env.APP_ENV)
+    console.log(process.env.APP_ENV == 'prod')
 });
 
 crestServer.listen(58900, () => {
