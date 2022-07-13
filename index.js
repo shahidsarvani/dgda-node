@@ -427,14 +427,28 @@ app.get('/api/model/down', (req, res) => {
 
 app.get('/api/room/:id/video/resume', (req, res) => {
     // socket.on('video', (msg) => {
-    io.emit('video', 'play');
-    io.emit('video_p', 'play');
+        if(req.params.id == 1) {
+            io.emit('video_wsw', 'play');
+            io.emit('video_wsp', 'play');
+        } else {
+            io.emit('video_dw', 'play');
+            io.emit('video_dp', 'play');
+        }
+    // io.emit('video', 'play');
+    // io.emit('video_p', 'play');
     // });
     res.send(apiResponse('Video play command is sent'));
 })
 
 app.get('/api/room/:id/video/forward', (req, res) => {
     // socket.on('video', (msg) => {
+        if(req.params.id == 1) {
+            io.emit('video_wsw', 'forward');
+            io.emit('video_wsp', 'forward');
+        } else {
+            io.emit('video_dw', 'forward');
+            io.emit('video_dp', 'forward');
+        }
     io.emit('video', 'forward');
     io.emit('video_p', 'forward');
     // });
@@ -443,16 +457,28 @@ app.get('/api/room/:id/video/forward', (req, res) => {
 
 app.get('/api/room/:id/video/back', (req, res) => {
     // socket.on('video', (msg) => {
-    io.emit('video', 'back');
-    io.emit('video_p', 'back');
+        if(req.params.id == 1) {
+            io.emit('video_wsw', 'back');
+            io.emit('video_wsp', 'back');
+        } else {
+            io.emit('video_dw', 'back');
+            io.emit('video_dp', 'back');
+        }
+    // io.emit('video', 'back');
+    // io.emit('video_p', 'back');
     // });
     res.send(apiResponse('Video back command is sent'));
 })
 
 app.get('/api/room/:id/video/pause', (req, res) => {
     // socket.on('video', (msg) => {
-    io.emit('video', 'pause');
-    io.emit('video_p', 'pause');
+        if(req.params.id == 1) {
+            io.emit('video_wsw', 'pause');
+            io.emit('video_wsp', 'pause');
+        } else {
+            io.emit('video_dw', 'pause');
+            io.emit('video_dp', 'pause');
+        }
     // });
     res.send(apiResponse('Video pause command is sent'));
 })
@@ -470,8 +496,15 @@ app.post('/api/room/:id/video/stop', (req, res) => {
         lang
     ]
     // return res.send(apiResponse(msg[1]));
-    io.emit('video_stop', msg);
-    io.emit('video_p', 'stop');
+        if(req.params.id == 1) {
+            io.emit('video_stop_wsw', msg);
+            io.emit('video_wsp', 'stop');
+        } else {
+            io.emit('video_stop_dw', msg);
+            io.emit('video_dp', 'stop');
+        }
+    // io.emit('video_stop', msg);
+    // io.emit('video_p', 'stop');
     res.send(apiResponse('Video stop command is sent'));
 })
 

@@ -24,7 +24,7 @@
         // socket.on('play', function (msg) {
         //     video.play();
         // })
-        socket.on('video', function (msg) {
+        socket.on('video_wsw', function (msg) {
             console.log(msg)
             switch (msg) {
                 case "play":
@@ -79,7 +79,7 @@
                 console.log(sock)
             }
         })
-        socket.on('video_stop', function (msg) {
+        socket.on('video_stop_wsw', function (msg) {
             // console.log(msg);
             // video.setAttribute('loop')
             // video.setAttribute('autoplay')
