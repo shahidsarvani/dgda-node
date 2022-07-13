@@ -78,26 +78,26 @@ io.on('connection', (socket) => {
     });
 
 
-    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
+    // let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
     let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.lang = 'ar'";
     // console.log(sqlQuery2);
     // return;
-    let query = conn.query(sqlQuery, (err, results) => {
-        if (err) {
-            console.log(err)
-        } else {
-            var child_argv = results.map((result) => {
-                return result.name
-            })
-            var r;
-            child_argv.forEach(function (item, index) {
-                setTimeout(function () {
-                    r = crestSocket.write(item);
-                    console.log("Command sent to crestron with status: " + r);
-                }, results[index].delay)
-            });
-        }
-    });
+    // let query = conn.query(sqlQuery, (err, results) => {
+    //     if (err) {
+    //         console.log(err)
+    //     } else {
+    //         var child_argv = results.map((result) => {
+    //             return result.name
+    //         })
+    //         var r;
+    //         child_argv.forEach(function (item, index) {
+    //             setTimeout(function () {
+    //                 r = crestSocket.write(item);
+    //                 console.log("Command sent to crestron with status: " + r);
+    //             }, results[index].delay)
+    //         });
+    //     }
+    // });
     let query2 = conn.query(sqlQuery2, (err, results) => {
         if (err) {
             console.log(err)
@@ -122,26 +122,26 @@ io.on('connection', (socket) => {
         io.emit('change_default_video_wsp', p_video);
         console.log('command is sent')
     });
-    let sqlQuery3 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
+    // let sqlQuery3 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
     let sqlQuery4 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 AND media.lang = 'ar'";
     // console.log(sqlQuery2);
     // return;
-    let query3 = conn.query(sqlQuery3, (err, results) => {
-        if (err) {
-            console.log(err)
-        } else {
-            var child_argv = results.map((result) => {
-                return result.name
-            })
-            var r;
-            child_argv.forEach(function (item, index) {
-                setTimeout(function () {
-                    r = crestSocket.write(item);
-                    console.log("Command sent to crestron with status: " + r);
-                }, results[index].delay)
-            });
-        }
-    });
+    // let query3 = conn.query(sqlQuery3, (err, results) => {
+    //     if (err) {
+    //         console.log(err)
+    //     } else {
+    //         var child_argv = results.map((result) => {
+    //             return result.name
+    //         })
+    //         var r;
+    //         child_argv.forEach(function (item, index) {
+    //             setTimeout(function () {
+    //                 r = crestSocket.write(item);
+    //                 console.log("Command sent to crestron with status: " + r);
+    //             }, results[index].delay)
+    //         });
+    //     }
+    // });
     let query4 = conn.query(sqlQuery4, (err, results) => {
         if (err) {
             console.log(err)
