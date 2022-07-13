@@ -8,12 +8,12 @@
     <title>Video</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We" crossorigin="anonymous">
-        <style>
-            video {
-                height: 100vh;
-                width: auto;
-            }
-        </style>
+    <style>
+        video {
+            height: 90vh;
+            width: auto;
+        }
+    </style>
 </head>
 
 <body>
@@ -21,6 +21,7 @@
         <video class="w-100" id="video" muted loop autoplay>
             Your browser does not support the video tag.
         </video>
+        <button type="button" class="btn btn-primary" onclick="openFullscreen()">Full Screen</button>
     </section>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -102,6 +103,16 @@
             video.src = "../media/video/" + msg;
             video.play();
         })
+
+        function openFullscreen() {
+            if (video.requestFullscreen) {
+                video.requestFullscreen();
+            } else if (video.webkitRequestFullscreen) { /* Safari */
+                video.webkitRequestFullscreen();
+            } else if (video.msRequestFullscreen) { /* IE11 */
+                video.msRequestFullscreen();
+            }
+        }
     </script>
 </body>
 
