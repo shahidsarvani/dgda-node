@@ -213,7 +213,7 @@ io.on('connection', (socket) => {
                 }
             }
 
-            if (msg[1] == 1) {
+            if (msg[1] == process.env.WS_ID) {
                 io.emit('change_default_video_wsw', w_video);
                 io.emit('change_default_video_wsp', p_video);
             } else {
@@ -427,7 +427,7 @@ app.get('/api/model/down', (req, res) => {
 
 app.get('/api/room/:id/video/resume', (req, res) => {
     // socket.on('video', (msg) => {
-        if(req.params.id == 1) {
+        if(req.params.id == process.env.WS_ID) {
             io.emit('video_wsw', 'play');
             io.emit('video_wsp', 'play');
         } else {
@@ -442,7 +442,7 @@ app.get('/api/room/:id/video/resume', (req, res) => {
 
 app.get('/api/room/:id/video/forward', (req, res) => {
     // socket.on('video', (msg) => {
-        if(req.params.id == 1) {
+        if(req.params.id == process.env.WS_ID) {
             io.emit('video_wsw', 'forward');
             io.emit('video_wsp', 'forward');
         } else {
@@ -457,7 +457,7 @@ app.get('/api/room/:id/video/forward', (req, res) => {
 
 app.get('/api/room/:id/video/back', (req, res) => {
     // socket.on('video', (msg) => {
-        if(req.params.id == 1) {
+        if(req.params.id == process.env.WS_ID) {
             io.emit('video_wsw', 'back');
             io.emit('video_wsp', 'back');
         } else {
@@ -472,7 +472,7 @@ app.get('/api/room/:id/video/back', (req, res) => {
 
 app.get('/api/room/:id/video/pause', (req, res) => {
     // socket.on('video', (msg) => {
-        if(req.params.id == 1) {
+        if(req.params.id == process.env.WS_ID) {
             io.emit('video_wsw', 'pause');
             io.emit('video_wsp', 'pause');
         } else {
@@ -496,7 +496,7 @@ app.post('/api/room/:id/video/stop', (req, res) => {
         lang
     ]
     // return res.send(apiResponse(msg[1]));
-        if(req.params.id == 1) {
+        if(req.params.id == process.env.WS_ID) {
             io.emit('video_stop_wsw', msg);
             io.emit('video_wsp', 'stop');
         } else {
@@ -616,7 +616,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
             }
         }
         // return res.send(apiResponse(w_video));
-        if (req.params.id == 1) {
+        if (req.params.id == process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
             io.emit('change_video_wsp', p_video);
         } else {
@@ -679,7 +679,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
             }
         }
         // return res.send(apiResponse(w_video));
-        if (req.params.id == 1) {
+        if (req.params.id == process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
             io.emit('change_video_wsp', p_video);
         } else {
