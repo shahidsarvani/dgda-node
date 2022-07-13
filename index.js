@@ -77,6 +77,96 @@ io.on('connection', (socket) => {
         io.emit('video', msg);
     });
 
+
+    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
+    let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.lang = 'ar'";
+    // console.log(sqlQuery2);
+    // return;
+    let query = conn.query(sqlQuery, (err, results) => {
+        if (err) {
+            console.log(err)
+        } else {
+            var child_argv = results.map((result) => {
+                return result.name
+            })
+            var r;
+            child_argv.forEach(function (item, index) {
+                setTimeout(function () {
+                    r = crestSocket.write(item);
+                    console.log("Command sent to crestron with status: " + r);
+                }, results[index].delay)
+            });
+        }
+    });
+    let query2 = conn.query(sqlQuery2, (err, results) => {
+        if (err) {
+            console.log(err)
+        };
+        // console.log(apiResponse(results))
+        // return;
+        var p_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].is_projector) {
+                p_video = results[i].name
+                break;
+            }
+        }
+        var w_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
+                w_video = results[i].name
+                break;
+            }
+        }
+        io.emit('change_default_video_wsw', w_video);
+        io.emit('change_default_video_wsp', p_video);
+        console.log('command is sent')
+    });
+    let sqlQuery3 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
+    let sqlQuery4 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 AND media.lang = 'ar'";
+    // console.log(sqlQuery2);
+    // return;
+    let query3 = conn.query(sqlQuery3, (err, results) => {
+        if (err) {
+            console.log(err)
+        } else {
+            var child_argv = results.map((result) => {
+                return result.name
+            })
+            var r;
+            child_argv.forEach(function (item, index) {
+                setTimeout(function () {
+                    r = crestSocket.write(item);
+                    console.log("Command sent to crestron with status: " + r);
+                }, results[index].delay)
+            });
+        }
+    });
+    let query4 = conn.query(sqlQuery4, (err, results) => {
+        if (err) {
+            console.log(err)
+        };
+        // console.log(apiResponse(results))
+        // return;
+        var p_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].is_projector) {
+                p_video = results[i].name
+                break;
+            }
+        }
+        var w_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
+                w_video = results[i].name
+                break;
+            }
+        }
+        io.emit('change_default_video_dw', w_video);
+        io.emit('change_default_video_dp', p_video);
+        console.log('command is sent')
+    });
+
     socket.on('default_video', (msg) => {
         console.log(msg)
         console.log('show ended')
@@ -105,7 +195,7 @@ io.on('connection', (socket) => {
                 console.log(err)
             };
             // console.log(apiResponse(results))
-            return;
+            // return;
             var p_video = '';
             for (var i = 0; i < results.length; i++) {
                 if (results[i].is_projector) {
@@ -431,7 +521,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         lang = req.body.lang
     }
     // return res.send(sqlQuery);
-    let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "'";
+    let sqlQuery2 = "SELECT media.name, media.is_projector, media.duration FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "'";
 
     // return res.send(apiResponse(sqlQuery2));
     if(process.env.APP_ENV == 'prod') {
@@ -494,7 +584,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     } else {
         lang = req.body.lang
     }
-    let sqlQuery = "SELECT name FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "'";
+    let sqlQuery = "SELECT name, is_projector, duration FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "'";
     let sqlQuery2 = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
 
     // return res.send(apiResponse(sqlQuery2));

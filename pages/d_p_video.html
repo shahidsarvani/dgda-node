@@ -80,7 +80,7 @@
             video.src = "../media/video/" + msg;
             video.play();
         })
-        socket.on('change_default_video_p', function (msg) {
+        socket.on('change_default_video_dp', function (msg) {
             console.log(msg);
             video.setAttribute('loop')
             video.setAttribute('autoplay')

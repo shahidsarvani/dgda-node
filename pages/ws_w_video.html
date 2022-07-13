@@ -91,7 +91,7 @@
             console.log(msg)
             socket.emit('default_video', msg);
         })
-        socket.on('change_default_video', function (msg) {
+        socket.on('change_default_video_wsw', function (msg) {
             console.log(msg);
             video.setAttribute('loop')
             video.setAttribute('autoplay')
