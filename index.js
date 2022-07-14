@@ -79,7 +79,7 @@ io.on('connection', (socket) => {
 
 
     // let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
-    let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.lang = 'ar'";
+    let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.lang = 'ar' ORDER BY media.id DESC LIMIT 1";
     // console.log(sqlQuery2);
     // return;
     // let query = conn.query(sqlQuery, (err, results) => {
@@ -123,7 +123,7 @@ io.on('connection', (socket) => {
         console.log('command is sent')
     });
     // let sqlQuery3 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
-    let sqlQuery4 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 AND media.lang = 'ar'";
+    let sqlQuery4 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 AND media.lang = 'ar' ORDER BY media.id DESC LIMIT 1";
     // console.log(sqlQuery2);
     // return;
     // let query3 = conn.query(sqlQuery3, (err, results) => {
@@ -171,7 +171,7 @@ io.on('connection', (socket) => {
         console.log(msg)
         console.log('show ended')
         let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
-        let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 AND media.lang = '" + msg[2] + "'";
+        let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 AND media.lang = '" + msg[2] + "' ORDER BY media.id DESC LIMIT 1";
         // console.log(sqlQuery2);
         // return;
         if (process.env.APP_ENV == 'prod') {
@@ -416,7 +416,7 @@ app.get('/api/room/:id/zones/ar', (req, res) => {
 
 app.get('/api/model/up', (req, res) => {
     // va
-    // let child = child_process.fork(child_script_path, child_argv)
+    let child = child_process.fork(child_script_path, child_argv)
     // res.send(apiResponseBad(null));
     res.send(apiResponse('Model up command is sent'));
 })
@@ -564,7 +564,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         lang = req.body.lang
     }
     // return res.send(sqlQuery);
-    let sqlQuery2 = "SELECT media.name, media.is_projector, media.duration FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "'";
+    let sqlQuery2 = "SELECT media.name, media.is_projector, media.duration FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC LIMIT 1";
 
     // return res.send(apiResponse(sqlQuery2));
     if (process.env.APP_ENV == 'prod') {
@@ -634,7 +634,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     } else {
         lang = req.body.lang
     }
-    let sqlQuery = "SELECT name, is_projector, duration FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "'";
+    let sqlQuery = "SELECT name, is_projector, duration FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC LIMIT 1";
     let sqlQuery2 = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
 
     // return res.send(apiResponse(sqlQuery2));
