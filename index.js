@@ -7,12 +7,14 @@ const http = require('http');
 const net = require('net');
 const server = http.createServer(app);
 const crestServer = net.createServer();
+const modelServer = net.createServer();
 const { Server } = require("socket.io");
 const io = new Server(server);
 require('dotenv').config();
 //const child_process = require('child_process');
 //const child_script_path = 'tcp.js';
 var crestSocket;
+var modelSocket;
 
 app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
@@ -66,6 +68,13 @@ crestServer.on("connection", (socket) => {
     crestSocket = socket;
     socket.setKeepAlive(true); // to keep the status connected with crestron
     crestSocket.setKeepAlive(true);
+});
+
+modelServer.on("connection", (socket) => {
+    console.log("Model connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    modelSocket = socket;
+    socket.setKeepAlive(true); // to keep the status connected with crestron
+    modelSocket.setKeepAlive(true);
 });
 
 io.on('connection', (socket) => {
@@ -730,4 +739,8 @@ server.listen(3001, () => {
 
 crestServer.listen(58900, () => {
     console.log('Crestron Server started on port %j', crestServer.address().port);
+});
+
+modelServer.listen(1914, () => {
+    console.log('opened server on %j', server.address().port);
 });
