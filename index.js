@@ -425,12 +425,13 @@ app.get('/api/room/:id/zones/ar', (req, res) => {
 
 app.get('/api/model/up', (req, res) => {
     // va
-    let child = child_process.fork(child_script_path, child_argv)
+    var r = modelSocket.write('MODELUP')
     // res.send(apiResponseBad(null));
     res.send(apiResponse('Model up command is sent'));
 })
 
 app.get('/api/model/down', (req, res) => {
+    var r = modelSocket.write('MODELDOWN')
     res.send(apiResponse('Model down command is sent'));
 })
 
@@ -592,7 +593,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
                 child_argv.forEach(function (item, index) {
                     setTimeout(function () {
                         r = crestSocket.write(item);
-                        console.log("Command sent to crestron with status: " + r);
+                        console.log(item + " Command sent to crestron with status: " + r + ' Time: '+ results[index].delay);
                     }, results[index].delay)
                 });
                 // res.send(apiResponse('command is sent'));
