@@ -180,7 +180,7 @@ io.on('connection', (socket) => {
     socket.on('default_video', (msg) => {
         console.log(msg)
         console.log('show ended')
-        let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
+        let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
         let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 AND media.lang = '" + msg[2] + "' ORDER BY media.id DESC";
         // console.log(sqlQuery2);
         // return;
@@ -189,16 +189,35 @@ io.on('connection', (socket) => {
                 if (err) {
                     console.log(err)
                 } else {
-                    var child_argv = results.map((result) => {
-                        return result.name
+                    var crestCommands = results.map((result) => {
+                        if (result.device == process.env.CREST_DEVICE)
+                            return result.name;
                     })
-                    var r;
-                    child_argv.forEach(function (item, index) {
+                    var modelCommands = results.map((result) => {
+                        if (result.device == process.env.MODEL_DEVICE)
+                            return result.name;
+                    })
+                    var r, dt;
+                    crestCommands.forEach(function (item, index) {
                         setTimeout(function () {
-                            r = crestSocket.write(item);
-                            console.log("Command sent to crestron with status: " + r);
-                        }, results[index].delay)
+                            dt = dateTime.create();
+                            if (crestSocket) r = crestSocket.write(item);
+                            var formatted = dt.format('Y-m-d H:M:S:N');
+                            console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+                        }, index * results[index].delay)
                     });
+                    console.log(crestCommands)
+                    console.log(modelCommands)
+                    if (modelCommands.length && modelCommands != undefined) {
+                        modelCommands.forEach(function (item, index) {
+                            setTimeout(function () {
+                                dt = dateTime.create();
+                                if (modelSocket) r = modelSocket.write(item);
+                                var formatted = dt.format('Y-m-d H:M:S:N');
+                                console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+                            }, index * results[index].delay)
+                        });
+                    }
                 }
             });
         }
