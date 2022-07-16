@@ -17,6 +17,12 @@
         video::-webkit-media-controls {
             display: none;
         }
+
+        #image {
+            display: none;
+            height: 100vh;
+            width: auto;
+        }
     </style>
 </head>
 
@@ -25,6 +31,7 @@
         <video class="w-100" id="video" muted autoplay loop>
             Your browser does not support the video tag.
         </video>
+        <img src="" alt="" id="image">
         <button type="button" class="btn btn-primary" onclick="openFullscreen()">Full Screen</button>
     </section>
 
@@ -32,6 +39,7 @@
     <script>
         var socket = io();
         var video = document.getElementById('video')
+        var image = document.getElementById('image')
         // socket.on('play', function (msg) {
         //     video.play();
         // })
@@ -84,13 +92,25 @@
         });
         socket.on('change_video_wsp', function (msg) {
             console.log(msg);
-            video.removeAttribute('loop')
-            video.removeAttribute('autoplay')
-            video.src = "../media/video/" + msg;
-            video.play();
+            if (msg[1]) {
+                console.log('image')
+                video.style.display = 'none';
+                image.style.display = 'block';
+                
+            } else {
+                console.log('video')
+                image.style.display = 'none';
+                video.style.display = 'block';
+                video.removeAttribute('loop')
+                video.removeAttribute('autoplay')
+                video.src = "../media/video/" + msg[0];
+                video.play();
+            }
         })
         socket.on('change_default_video_wsp', function (msg) {
             console.log(msg);
+            image.style.display = 'none';
+            video.style.display = 'block';
             video.setAttribute('loop', true)
             video.setAttribute('autoplay', true)
             video.src = "../media/video/" + msg;

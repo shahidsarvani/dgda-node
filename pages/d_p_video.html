@@ -17,6 +17,12 @@
         video::-webkit-media-controls {
             display: none;
         }
+
+        #image {
+            display: none;
+            height: 100vh;
+            width: auto;
+        }
     </style>
 </head>
 
@@ -25,13 +31,19 @@
         <video class="w-100" id="video" muted autoplay loop>
             Your browser does not support the video tag.
         </video>
-        <button type="button" class="btn btn-primary" onclick="openFullscreen()">Full Screen</button>
+        <img src="" alt="" id="image">
+        <button type="button" class="btn btn-primary" id="video_btn" onclick="openVideoFullscreen()">Full Screen</button>
+        <button type="button" class="btn btn-primary" id="image_btn" onclick="openImageFullscreen()">Full Screen</button>
     </section>
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
         var socket = io();
         var video = document.getElementById('video')
+        var image = document.getElementById('image')
+        var videoBtn = document.getElementById('video_btn')
+        var imageBtn = document.getElementById('image_btn')
+            // videoBtn.click()
         // socket.on('play', function (msg) {
         //     video.play();
         // })
@@ -84,26 +96,49 @@
         });
         socket.on('change_video_dp', function (msg) {
             console.log(msg);
-            video.removeAttribute('loop')
-            video.removeAttribute('autoplay')
-            video.src = "../media/video/" + msg;
-            video.play();
+            if (msg[1]) {
+                console.log('image')
+                video.style.display = 'none';
+                image.style.display = 'block';
+                image.src = "../media/video/" + msg[0];
+                imageBtn.click()
+            } else {
+                console.log('video')
+                image.style.display = 'none';
+                video.style.display = 'block';
+                video.removeAttribute('loop')
+                video.removeAttribute('autoplay')
+                video.src = "../media/video/" + msg[0];
+                videoBtn.click()
+                video.play();
+            }
         })
         socket.on('change_default_video_dp', function (msg) {
             console.log(msg);
+            image.style.display = 'none';
+            video.style.display = 'block';
             video.setAttribute('loop', true)
             video.setAttribute('autoplay', true)
             video.src = "../media/video/" + msg;
             video.play();
         })
 
-        function openFullscreen() {
+        function openVideoFullscreen() {
             if (video.requestFullscreen) {
                 video.requestFullscreen();
             } else if (video.webkitRequestFullscreen) { /* Safari */
                 video.webkitRequestFullscreen();
             } else if (video.msRequestFullscreen) { /* IE11 */
                 video.msRequestFullscreen();
+            }
+        }
+        function openImageFullscreen() {
+            if (image.requestFullscreen) {
+                image.requestFullscreen();
+            } else if (image.webkitRequestFullscreen) { /* Safari */
+                image.webkitRequestFullscreen();
+            } else if (image.msRequestFullscreen) { /* IE11 */
+                image.msRequestFullscreen();
             }
         }
     </script>
