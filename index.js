@@ -617,8 +617,34 @@ app.get('/api/light_scene_command/:id', (req, res) => {
     });
 })
 
+function sendCrestCommands(crestCommands, results)
+{
+    var r, dt;
+    crestCommands.forEach(function (item, index) {
+        setTimeout(function () {
+            dt = dateTime.create();
+            if (crestSocket) r = crestSocket.write(item);
+            var formatted = dt.format('Y-m-d H:M:S:N');
+            console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+        }, index * results[index].delay)
+    });
+}
+
+function sendModelCommands(modelCommands, results)
+{
+    var r, dt;
+    modelCommands.forEach(function (item, index) {
+        setTimeout(function () {
+            dt = dateTime.create();
+            if (modelSocket) r = modelSocket.write(item);
+            var formatted = dt.format('Y-m-d H:M:S:N');
+            console.log(formatted + ": " + item + " sent to model with status: " + r + ", Delay: " + results[index].delay);
+        }, index * results[index].delay)
+    });
+}
+
 app.post('/api/room/:id/play_scene', (req, res) => {
-    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
+    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = "+req.params.id+" ORDER BY command_scene.sort_order ASC";
     var lang;
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
         lang = 'en';
@@ -628,40 +654,35 @@ app.post('/api/room/:id/play_scene', (req, res) => {
     // return res.send(sqlQuery);
     let sqlQuery2 = "SELECT media.name, media.is_projector, media.duration, media.is_image FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
 
-    return res.send(apiResponse(sqlQuery));
+    // return res.send(apiResponse(sqlQuery));
     if (process.env.APP_ENV == 'prod') {
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
                 return res.send(apiResponseBad(null));
             } else {
-                var crestCommands = results.map((result) => {
-                    if (result.device == process.env.CREST_DEVICE)
-                        return result.name;
-                })
-                var modelCommands = results.map((result) => {
-                    if (result.device == process.env.MODEL_DEVICE)
-                        return result.name;
-                })
-                var r, dt;
-                crestCommands.forEach(function (item, index) {
-                    setTimeout(function () {
-                        dt = dateTime.create();
-                        if (crestSocket) r = crestSocket.write(item);
-                        var formatted = dt.format('Y-m-d H:M:S:N');
-                        console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
-                    }, index * results[index].delay)
-                });
-                if (modelCommands.length && modelCommands != undefined) {
-                    modelCommands.forEach(function (item, index) {
-                        setTimeout(function () {
-                            dt = dateTime.create();
-                            if (modelSocket) r = modelSocket.write(item);
-                            var formatted = dt.format('Y-m-d H:M:S:N');
-                            console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
-                        }, index * results[index].delay)
+                var execCommands = async () => {
+                    var crestCommands = results.map((result) => {
+                        if (result.device == process.env.CREST_DEVICE) {
+                            return result.name;
+                        }
                     });
-                }
-                // res.send(apiResponse('command is sent'));
+                    crestCommands = crestCommands.filter(function( element ) {
+                        return element !== undefined;
+                    });
+                    var modelCommands = results.map((result) => {
+                        if (result.device == process.env.MODEL_DEVICE)
+                            return result.name;
+                    })
+                    modelCommands = modelCommands.filter(function( element ) {
+                        return element !== undefined;
+                     });
+                    console.log(crestCommands);
+                    console.log(modelCommands);
+
+                    await sendCrestCommands(crestCommands, results);
+                    await sendModelCommands(modelCommands, results);
+                };
+                execCommands();
             }
         });
     }
