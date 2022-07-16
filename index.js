@@ -754,7 +754,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     }
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
-            res.send(apiResponseBad(null));
+            return res.send(apiResponseBad(null));
         };
         // return res.send(apiResponse(results));
         var p_video = '';
@@ -786,7 +786,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         }
         // io.emit('change_video', w_video);
         // io.emit('change_video_p', p_video);
-        res.send(apiResponse(duration));
+        return res.send(apiResponse(duration));
     });
 })
 
