@@ -560,22 +560,37 @@ app.get('/api/volume/mute', (req, res) => {
 })
 
 app.get('/api/light_scene_command/:id', (req, res) => {
-    let sqlQuery = "SELECT name FROM `commands` INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
+    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
 
     // res.send(apiResponse(sqlQuery));
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
-            res.send(apiResponseBad(null));
+            return res.send(apiResponseBad(null));
         } else {
-            var child_argv = results.map((result) => {
-                return result.name
+            var crestCommands = results.map((result) => {
+                if(result.device == process.env.CREST_DEVICE)
+                    return result.name;
             })
-            // res.send(apiResponse(child_argv));
-            //let child = child_process.fork(child_script_path, child_argv)
-            var r;
-            child_argv.forEach(function (item) {
-                r = crestSocket.write(item);
-                console.log("Command sent to crestron with status: " + r);
+            var modelCommands = results.map((result) => {
+                if(result.device == process.env.MODEL_DEVICE)
+                    return result.name;
+            })
+            var r, dt;
+            crestCommands.forEach(function (item, index) {
+                setTimeout(function () {
+                    dt = dateTime.create();
+                    if(crestSocket) r = crestSocket.write(item);
+                    var formatted = dt.format('Y-m-d H:M:S:N');
+                    console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+                }, index * results[index].delay)
+            });
+            modelCommands.forEach(function (item, index) {
+                setTimeout(function () {
+                    dt = dateTime.create();
+                    if(modelSocket) r = modelSocket.write(item);
+                    var formatted = dt.format('Y-m-d H:M:S:N');
+                    console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+                }, index * results[index].delay)
             });
             res.send(apiResponse('command is sent'));
         }
