@@ -85,7 +85,7 @@
             video.src = "../media/video/" + msg[0];
             video.play();
             var quality = video.getVideoPlaybackQuality()
-            console.log("Video Quality: " + quality.totalVideoFrames)
+            console.log("Video Quality: " + JSON.stringify(quality))
             video.onended = () => {
                 console.log('video ended')
                 var sock = socket.emit('default_video', msg);
