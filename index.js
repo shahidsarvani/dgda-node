@@ -580,6 +580,8 @@ app.get('/api/light_scene_command/:id', (req, res) => {
                     console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
                 }, index * results[index].delay)
             });
+            console.log(crestCommands)
+            console.log(modelCommands)
             if (modelCommands.length) {
                 modelCommands.forEach(function (item, index) {
                     setTimeout(function () {
