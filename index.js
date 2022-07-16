@@ -426,12 +426,13 @@ app.get('/api/room/:id/zones/ar', (req, res) => {
 app.get('/api/model/up', (req, res) => {
     // va
     var r = modelSocket.write('MODELUP')
-    // res.send(apiResponseBad(null));
+    console.log("Command sent to model with status: " + r);
     res.send(apiResponse('Model up command is sent'));
 })
 
 app.get('/api/model/down', (req, res) => {
     var r = modelSocket.write('MODELDOWN')
+    console.log("Command sent to model with status: " + r);
     res.send(apiResponse('Model down command is sent'));
 })
 
