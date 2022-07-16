@@ -718,7 +718,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
                         console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
                     }, index * results[index].delay)
                 });
-                if (modelCommands.length && modelCommands != undefined) {
+                if (modelCommands.length && modelCommands[0] != undefined) {
                     modelCommands.forEach(function (item, index) {
                         setTimeout(function () {
                             dt = dateTime.create();
