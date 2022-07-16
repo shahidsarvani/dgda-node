@@ -599,25 +599,30 @@ app.post('/api/room/:id/play_scene', (req, res) => {
             if (err) {
                 return res.send(apiResponseBad(null));
             } else {
-                var child_argv = results.map((result) => {
-                    return result.name
+                var crestCommands = results.map((result) => {
+                    if(result.device == process.env.CREST_DEVICE)
+                        return result.name;
+                })
+                var modelCommands = results.map((result) => {
+                    if(result.device == process.env.MODEL_DEVICE)
+                        return result.name;
                 })
                 var r, dt;
-                child_argv.forEach(function (item, index) {
+                crestCommands.forEach(function (item, index) {
                     setTimeout(function () {
                         dt = dateTime.create();
                         if(crestSocket) r = crestSocket.write(item);
                         var formatted = dt.format('Y-m-d H:M:S:N');
                         console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
                     }, index * results[index].delay)
-                    if(process.env.MODEL_DEVICE == results[index].device) {
-                        setTimeout(function () {
-                            dt = dateTime.create();
-                            if(modelSocket) r = modelSocket.write(item);
-                            var formatted = dt.format('Y-m-d H:M:S:N');
-                            console.log(formatted + ": Command sent to model with status: " + r + ", Delay: 15");
-                        }, 15000)
-                    }
+                });
+                modelCommands.forEach(function (item, index) {
+                    setTimeout(function () {
+                        dt = dateTime.create();
+                        if(modelSocket) r = modelSocket.write(item);
+                        var formatted = dt.format('Y-m-d H:M:S:N');
+                        console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+                    }, index * results[index].delay)
                 });
                 // res.send(apiResponse('command is sent'));
             }
