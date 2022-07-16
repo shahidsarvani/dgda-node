@@ -425,28 +425,24 @@ app.get('/api/room/:id/zones/ar', (req, res) => {
 });
 
 app.get('/api/model/up', (req, res) => {
-    if(modelSocket)
-    {
+    if (modelSocket) {
         var r = modelSocket.write('MODELUP')
         console.log("Command sent to model with status: " + r);
         res.send(apiResponse('Model up command is sent'));
     }
-    else 
-    {
+    else {
         console.log("Model Server not connected");
         res.send(apiResponseBad('Model Server not connected'));
     }
 })
 
 app.get('/api/model/down', (req, res) => {
-    if(modelSocket)
-    {
+    if (modelSocket) {
         var r = modelSocket.write('MODELDOWN')
         console.log("Command sent to model with status: " + r);
         res.send(apiResponse('Model up command is sent'));
     }
-    else 
-    {
+    else {
         console.log("Model Server not connected");
         res.send(apiResponseBad('Model Server not connected'));
     }
@@ -454,13 +450,13 @@ app.get('/api/model/down', (req, res) => {
 
 app.get('/api/room/:id/video/resume', (req, res) => {
     // socket.on('video', (msg) => {
-        if(req.params.id == process.env.WS_ID) {
-            io.emit('video_wsw', 'play');
-            io.emit('video_wsp', 'play');
-        } else {
-            io.emit('video_dw', 'play');
-            io.emit('video_dp', 'play');
-        }
+    if (req.params.id == process.env.WS_ID) {
+        io.emit('video_wsw', 'play');
+        io.emit('video_wsp', 'play');
+    } else {
+        io.emit('video_dw', 'play');
+        io.emit('video_dp', 'play');
+    }
     // io.emit('video', 'play');
     // io.emit('video_p', 'play');
     // });
@@ -469,13 +465,13 @@ app.get('/api/room/:id/video/resume', (req, res) => {
 
 app.get('/api/room/:id/video/forward', (req, res) => {
     // socket.on('video', (msg) => {
-        if(req.params.id == process.env.WS_ID) {
-            io.emit('video_wsw', 'forward');
-            io.emit('video_wsp', 'forward');
-        } else {
-            io.emit('video_dw', 'forward');
-            io.emit('video_dp', 'forward');
-        }
+    if (req.params.id == process.env.WS_ID) {
+        io.emit('video_wsw', 'forward');
+        io.emit('video_wsp', 'forward');
+    } else {
+        io.emit('video_dw', 'forward');
+        io.emit('video_dp', 'forward');
+    }
     io.emit('video', 'forward');
     io.emit('video_p', 'forward');
     // });
@@ -484,13 +480,13 @@ app.get('/api/room/:id/video/forward', (req, res) => {
 
 app.get('/api/room/:id/video/back', (req, res) => {
     // socket.on('video', (msg) => {
-        if(req.params.id == process.env.WS_ID) {
-            io.emit('video_wsw', 'back');
-            io.emit('video_wsp', 'back');
-        } else {
-            io.emit('video_dw', 'back');
-            io.emit('video_dp', 'back');
-        }
+    if (req.params.id == process.env.WS_ID) {
+        io.emit('video_wsw', 'back');
+        io.emit('video_wsp', 'back');
+    } else {
+        io.emit('video_dw', 'back');
+        io.emit('video_dp', 'back');
+    }
     // io.emit('video', 'back');
     // io.emit('video_p', 'back');
     // });
@@ -499,13 +495,13 @@ app.get('/api/room/:id/video/back', (req, res) => {
 
 app.get('/api/room/:id/video/pause', (req, res) => {
     // socket.on('video', (msg) => {
-        if(req.params.id == process.env.WS_ID) {
-            io.emit('video_wsw', 'pause');
-            io.emit('video_wsp', 'pause');
-        } else {
-            io.emit('video_dw', 'pause');
-            io.emit('video_dp', 'pause');
-        }
+    if (req.params.id == process.env.WS_ID) {
+        io.emit('video_wsw', 'pause');
+        io.emit('video_wsp', 'pause');
+    } else {
+        io.emit('video_dw', 'pause');
+        io.emit('video_dp', 'pause');
+    }
     // });
     res.send(apiResponse('Video pause command is sent'));
 })
@@ -523,13 +519,13 @@ app.post('/api/room/:id/video/stop', (req, res) => {
         lang
     ]
     // return res.send(apiResponse(msg[1]));
-        if(req.params.id == process.env.WS_ID) {
-            io.emit('video_stop_wsw', msg);
-            io.emit('video_wsp', 'stop');
-        } else {
-            io.emit('video_stop_dw', msg);
-            io.emit('video_dp', 'stop');
-        }
+    if (req.params.id == process.env.WS_ID) {
+        io.emit('video_stop_wsw', msg);
+        io.emit('video_wsp', 'stop');
+    } else {
+        io.emit('video_stop_dw', msg);
+        io.emit('video_dp', 'stop');
+    }
     // io.emit('video_stop', msg);
     // io.emit('video_p', 'stop');
     res.send(apiResponse('Video stop command is sent'));
@@ -568,30 +564,32 @@ app.get('/api/light_scene_command/:id', (req, res) => {
             return res.send(apiResponseBad(null));
         } else {
             var crestCommands = results.map((result) => {
-                if(result.device == process.env.CREST_DEVICE)
+                if (result.device == process.env.CREST_DEVICE)
                     return result.name;
             })
             var modelCommands = results.map((result) => {
-                if(result.device == process.env.MODEL_DEVICE)
+                if (result.device == process.env.MODEL_DEVICE)
                     return result.name;
             })
             var r, dt;
             crestCommands.forEach(function (item, index) {
                 setTimeout(function () {
                     dt = dateTime.create();
-                    if(crestSocket) r = crestSocket.write(item);
+                    if (crestSocket) r = crestSocket.write(item);
                     var formatted = dt.format('Y-m-d H:M:S:N');
                     console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
                 }, index * results[index].delay)
             });
-            modelCommands.forEach(function (item, index) {
-                setTimeout(function () {
-                    dt = dateTime.create();
-                    if(modelSocket) r = modelSocket.write(item);
-                    var formatted = dt.format('Y-m-d H:M:S:N');
-                    console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
-                }, index * results[index].delay)
-            });
+            if (modelCommands.length) {
+                modelCommands.forEach(function (item, index) {
+                    setTimeout(function () {
+                        dt = dateTime.create();
+                        if (modelSocket) r = modelSocket.write(item);
+                        var formatted = dt.format('Y-m-d H:M:S:N');
+                        console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+                    }, index * results[index].delay)
+                });
+            }
             res.send(apiResponse('command is sent'));
         }
     });
@@ -615,30 +613,32 @@ app.post('/api/room/:id/play_scene', (req, res) => {
                 return res.send(apiResponseBad(null));
             } else {
                 var crestCommands = results.map((result) => {
-                    if(result.device == process.env.CREST_DEVICE)
+                    if (result.device == process.env.CREST_DEVICE)
                         return result.name;
                 })
                 var modelCommands = results.map((result) => {
-                    if(result.device == process.env.MODEL_DEVICE)
+                    if (result.device == process.env.MODEL_DEVICE)
                         return result.name;
                 })
                 var r, dt;
                 crestCommands.forEach(function (item, index) {
                     setTimeout(function () {
                         dt = dateTime.create();
-                        if(crestSocket) r = crestSocket.write(item);
+                        if (crestSocket) r = crestSocket.write(item);
                         var formatted = dt.format('Y-m-d H:M:S:N');
                         console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
                     }, index * results[index].delay)
                 });
-                modelCommands.forEach(function (item, index) {
-                    setTimeout(function () {
-                        dt = dateTime.create();
-                        if(modelSocket) r = modelSocket.write(item);
-                        var formatted = dt.format('Y-m-d H:M:S:N');
-                        console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
-                    }, index * results[index].delay)
-                });
+                if (modelCommands.length) {
+                    modelCommands.forEach(function (item, index) {
+                        setTimeout(function () {
+                            dt = dateTime.create();
+                            if (modelSocket) r = modelSocket.write(item);
+                            var formatted = dt.format('Y-m-d H:M:S:N');
+                            console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+                        }, index * results[index].delay)
+                    });
+                }
                 // res.send(apiResponse('command is sent'));
             }
         });
@@ -691,7 +691,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         lang = req.body.lang
     }
     let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
-    let sqlQuery2 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
+    let sqlQuery2 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
 
     // return res.send(apiResponse(sqlQuery2));
     if (process.env.APP_ENV == 'prod') {
@@ -699,18 +699,33 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
             if (err) {
                 res.send(apiResponseBad(null));
             } else {
-                var child_argv = results.map((result) => {
-                    return result.name
+                var crestCommands = results.map((result) => {
+                    if (result.device == process.env.CREST_DEVICE)
+                        return result.name;
+                })
+                var modelCommands = results.map((result) => {
+                    if (result.device == process.env.MODEL_DEVICE)
+                        return result.name;
                 })
                 var r, dt;
-                child_argv.forEach(function (item, index) {
+                crestCommands.forEach(function (item, index) {
                     setTimeout(function () {
                         dt = dateTime.create();
-                        if(crestSocket) r = crestSocket.write(item);
+                        if (crestSocket) r = crestSocket.write(item);
                         var formatted = dt.format('Y-m-d H:M:S:N');
                         console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
                     }, index * results[index].delay)
                 });
+                if (modelCommands.length) {
+                    modelCommands.forEach(function (item, index) {
+                        setTimeout(function () {
+                            dt = dateTime.create();
+                            if (modelSocket) r = modelSocket.write(item);
+                            var formatted = dt.format('Y-m-d H:M:S:N');
+                            console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+                        }, index * results[index].delay)
+                    });
+                }
                 //res.send(apiResponse('command is sent'));
             }
         });
