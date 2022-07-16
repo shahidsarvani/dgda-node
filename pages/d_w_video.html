@@ -84,7 +84,8 @@
             video.removeAttribute('autoplay')
             video.src = "../media/video/" + msg[0];
             video.play();
-            console.log("Video Quality: " + video.getVideoPlaybackQuality())
+            var quality = video.getVideoPlaybackQuality()
+            console.log("Video Quality: " + quality.totalVideoFrames)
             video.onended = () => {
                 console.log('video ended')
                 var sock = socket.emit('default_video', msg);
