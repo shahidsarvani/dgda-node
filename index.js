@@ -786,7 +786,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         }
         // io.emit('change_video', w_video);
         // io.emit('change_video_p', p_video);
-        res.send(apiResponse());
+        res.send(apiResponse(duration));
     });
 })
 
