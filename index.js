@@ -16,6 +16,7 @@ require('dotenv').config();
 var crestSocket;
 var modelSocket;
 var dateTime = require('node-datetime');
+var videoInterval = {}
 
 app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
