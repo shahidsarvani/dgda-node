@@ -560,7 +560,7 @@ app.get('/api/volume/mute', (req, res) => {
 })
 
 app.get('/api/light_scene_command/:id', (req, res) => {
-    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
+    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
 
     // res.send(apiResponse(sqlQuery));
     let query = conn.query(sqlQuery, (err, results) => {
