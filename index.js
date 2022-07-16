@@ -15,6 +15,7 @@ require('dotenv').config();
 //const child_script_path = 'tcp.js';
 var crestSocket;
 var modelSocket;
+var dateTime = require('node-datetime');
 
 app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
@@ -424,16 +425,31 @@ app.get('/api/room/:id/zones/ar', (req, res) => {
 });
 
 app.get('/api/model/up', (req, res) => {
-    // va
-    var r = modelSocket.write('MODELUP')
-    console.log("Command sent to model with status: " + r);
-    res.send(apiResponse('Model up command is sent'));
+    if(modelSocket)
+    {
+        var r = modelSocket.write('MODELUP')
+        console.log("Command sent to model with status: " + r);
+        res.send(apiResponse('Model up command is sent'));
+    }
+    else 
+    {
+        console.log("Model Server not connected");
+        res.send(apiResponseBad('Model Server not connected'));
+    }
 })
 
 app.get('/api/model/down', (req, res) => {
-    var r = modelSocket.write('MODELDOWN')
-    console.log("Command sent to model with status: " + r);
-    res.send(apiResponse('Model down command is sent'));
+    if(modelSocket)
+    {
+        var r = modelSocket.write('MODELDOWN')
+        console.log("Command sent to model with status: " + r);
+        res.send(apiResponse('Model up command is sent'));
+    }
+    else 
+    {
+        console.log("Model Server not connected");
+        res.send(apiResponseBad('Model Server not connected'));
+    }
 })
 
 app.get('/api/room/:id/video/resume', (req, res) => {
@@ -583,19 +599,17 @@ app.post('/api/room/:id/play_scene', (req, res) => {
             if (err) {
                 return res.send(apiResponseBad(null));
             } else {
-                // return res.send(apiResponseBad(timeOut));
-
                 var child_argv = results.map((result) => {
                     return result.name
                 })
-                // return res.send(apiResponse(child_argv));
-                //let child = child_process.fork(child_script_path, child_argv)
-                var r;
+                var r, dt;
                 child_argv.forEach(function (item, index) {
                     setTimeout(function () {
-                        r = crestSocket.write(item);
-                        console.log(item + " Command sent to crestron with status: " + r + ' Time: '+ results[index].delay);
-                    }, results[index].delay)
+                        dt = dateTime.create();
+                        if(crestSocket) r = crestSocket.write(item);
+                        var formatted = dt.format('Y-m-d H:M:S:N');
+                        console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+                    }, index * results[index].delay)
                 });
                 // res.send(apiResponse('command is sent'));
             }
@@ -649,7 +663,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         lang = req.body.lang
     }
     let sqlQuery = "SELECT name, is_projector, duration FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
-    let sqlQuery2 = "SELECT commands.name FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
+    let sqlQuery2 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
 
     // return res.send(apiResponse(sqlQuery2));
     if (process.env.APP_ENV == 'prod') {
@@ -660,12 +674,14 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
                 var child_argv = results.map((result) => {
                     return result.name
                 })
-                // res.send(apiResponse(child_argv));
-                //let child = child_process.fork(child_script_path, child_argv)
-                var r;
-                child_argv.forEach(function (item) {
-                    r = crestSocket.write(item);
-                    console.log("Command sent to crestron with status: " + r);
+                var r, dt;
+                child_argv.forEach(function (item, index) {
+                    setTimeout(function () {
+                        dt = dateTime.create();
+                        if(crestSocket) r = crestSocket.write(item);
+                        var formatted = dt.format('Y-m-d H:M:S:N');
+                        console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+                    }, index * results[index].delay)
                 });
                 //res.send(apiResponse('command is sent'));
             }
@@ -704,13 +720,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         // io.emit('change_video_p', p_video);
         res.send(apiResponse());
     });
-
 })
-
-// app.get('/api/video/get_status', (req, res) => {
-
-// })
-
 
 app.get('/api/test', (req, res) => {
     const child_argv = [
@@ -737,15 +747,14 @@ function apiResponseBad(results) {
     return { "status": 500, "error": true, "response": results };
 }
 
-server.listen(3001, () => {
+server.listen(process.env.APP_PORT, () => {
     console.log('App Server started on port  %j', server.address().port);
-    console.log(process.env.APP_ENV == 'prod')
 });
 
-crestServer.listen(58900, () => {
+crestServer.listen(process.env.CREST_PORT, () => {
     console.log('Crestron Server started on port %j', crestServer.address().port);
 });
 
-modelServer.listen(1914, () => {
-    console.log('opened model server on %j', modelServer.address().port);
+modelServer.listen(process.env.MODEL_PORT, () => {
+    console.log('Model server started on port %j', modelServer.address().port);
 });
