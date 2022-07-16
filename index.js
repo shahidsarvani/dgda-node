@@ -743,5 +743,5 @@ crestServer.listen(58900, () => {
 });
 
 modelServer.listen(1914, () => {
-    console.log('opened model server on %j', server.address().port);
+    console.log('opened model server on %j', modelServer.address().port);
 });
