@@ -190,35 +190,11 @@ io.on('connection', (socket) => {
                 if (err) {
                     console.log(err)
                 } else {
-                    var crestCommands = results.map((result) => {
-                        if (result.device == process.env.CREST_DEVICE)
-                            return result.name;
-                    })
-                    var modelCommands = results.map((result) => {
-                        if (result.device == process.env.MODEL_DEVICE)
-                            return result.name;
-                    })
-                    var r, dt;
-                    crestCommands.forEach(function (item, index) {
-                        setTimeout(function () {
-                            dt = dateTime.create();
-                            if (crestSocket) r = crestSocket.write(item);
-                            var formatted = dt.format('Y-m-d H:M:S:N');
-                            console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
-                        }, index * results[index].delay)
-                    });
-                    console.log(crestCommands)
-                    console.log(modelCommands)
-                    if (modelCommands.length && modelCommands != undefined) {
-                        modelCommands.forEach(function (item, index) {
-                            setTimeout(function () {
-                                dt = dateTime.create();
-                                if (modelSocket) r = modelSocket.write(item);
-                                var formatted = dt.format('Y-m-d H:M:S:N');
-                                console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
-                            }, index * results[index].delay)
-                        });
-                    }
+                    var execCommands = async () => {
+                        await sendCrestCommands(results);
+                        await sendModelCommands(results);
+                    };
+                    execCommands();
                 }
             });
         }
@@ -583,42 +559,27 @@ app.get('/api/light_scene_command/:id', (req, res) => {
         if (err) {
             return res.send(apiResponseBad(null));
         } else {
-            var crestCommands = results.map((result) => {
-                if (result.device == process.env.CREST_DEVICE)
-                    return result.name;
-            })
-            var modelCommands = results.map((result) => {
-                if (result.device == process.env.MODEL_DEVICE)
-                    return result.name;
-            })
-            var r, dt;
-            crestCommands.forEach(function (item, index) {
-                setTimeout(function () {
-                    dt = dateTime.create();
-                    if (crestSocket) r = crestSocket.write(item);
-                    var formatted = dt.format('Y-m-d H:M:S:N');
-                    console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
-                }, index * results[index].delay)
-            });
-            console.log(crestCommands)
-            console.log(modelCommands)
-            if (modelCommands.length && modelCommands != undefined) {
-                modelCommands.forEach(function (item, index) {
-                    setTimeout(function () {
-                        dt = dateTime.create();
-                        if (modelSocket) r = modelSocket.write(item);
-                        var formatted = dt.format('Y-m-d H:M:S:N');
-                        console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
-                    }, index * results[index].delay)
-                });
-            }
+            var execCommands = async () => {
+                await sendCrestCommands(results);
+            };
+            execCommands();
             res.send(apiResponse('command is sent'));
         }
     });
 })
 
-function sendCrestCommands(crestCommands, results)
+function sendCrestCommands(results)
 {
+    var crestCommands = results.map((result) => {
+        if (result.device == process.env.CREST_DEVICE) {
+            return result.name;
+        }
+    });
+    crestCommands = crestCommands.filter(function( element ) {
+        return element !== undefined;
+    });
+    console.log(crestCommands);
+
     var r, dt;
     crestCommands.forEach(function (item, index) {
         setTimeout(function () {
@@ -630,10 +591,20 @@ function sendCrestCommands(crestCommands, results)
     });
 }
 
-function sendModelCommands(modelCommands, results)
+function sendModelCommands(results)
 {
+    var modelCommands = results.map((result) => {
+        if (result.device == process.env.MODEL_DEVICE)
+            return result.name;
+    })
+    modelCommands = modelCommands.filter(function( element ) {
+        return element !== undefined;
+     });
+    console.log(modelCommands);
     var r, dt;
-    modelCommands.forEach(function (item, index) {
+    modelCommands.forEach(async function (item, index) {
+        if(item == process.env.MODEL_UP) await sleep(results[index].model_up_delay * 1000);
+        if(item == process.env.MODEL_DOWN) await sleep(results[index].model_down_delay * 1000);
         setTimeout(function () {
             dt = dateTime.create();
             if (modelSocket) r = modelSocket.write(item);
@@ -642,6 +613,12 @@ function sendModelCommands(modelCommands, results)
         }, index * results[index].delay)
     });
 }
+
+function sleep(ms) {
+    return new Promise((resolve) => {
+      setTimeout(resolve, ms);
+    });
+  }
 
 app.post('/api/room/:id/play_scene', (req, res) => {
     let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = "+req.params.id+" ORDER BY command_scene.sort_order ASC";
@@ -661,26 +638,8 @@ app.post('/api/room/:id/play_scene', (req, res) => {
                 return res.send(apiResponseBad(null));
             } else {
                 var execCommands = async () => {
-                    var crestCommands = results.map((result) => {
-                        if (result.device == process.env.CREST_DEVICE) {
-                            return result.name;
-                        }
-                    });
-                    crestCommands = crestCommands.filter(function( element ) {
-                        return element !== undefined;
-                    });
-                    var modelCommands = results.map((result) => {
-                        if (result.device == process.env.MODEL_DEVICE)
-                            return result.name;
-                    })
-                    modelCommands = modelCommands.filter(function( element ) {
-                        return element !== undefined;
-                     });
-                    console.log(crestCommands);
-                    console.log(modelCommands);
-
-                    await sendCrestCommands(crestCommands, results);
-                    await sendModelCommands(modelCommands, results);
+                    await sendCrestCommands(results);
+                    await sendModelCommands(results);
                 };
                 execCommands();
             }
@@ -724,6 +683,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
         }
         return res.send(apiResponse(duration));
     });
+
 })
 
 app.post('/api/zone/:id/play_scene', (req, res) => {
@@ -742,34 +702,11 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
             if (err) {
                 res.send(apiResponseBad(null));
             } else {
-                var crestCommands = results.map((result) => {
-                    if (result.device == process.env.CREST_DEVICE)
-                        return result.name;
-                })
-                var modelCommands = results.map((result) => {
-                    if (result.device == process.env.MODEL_DEVICE)
-                        return result.name;
-                })
-                var r, dt;
-                crestCommands.forEach(function (item, index) {
-                    setTimeout(function () {
-                        dt = dateTime.create();
-                        if (crestSocket) r = crestSocket.write(item);
-                        var formatted = dt.format('Y-m-d H:M:S:N');
-                        console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
-                    }, index * results[index].delay)
-                });
-                if (modelCommands.length && modelCommands[0] != undefined) {
-                    modelCommands.forEach(function (item, index) {
-                        setTimeout(function () {
-                            dt = dateTime.create();
-                            if (modelSocket) r = modelSocket.write(item);
-                            var formatted = dt.format('Y-m-d H:M:S:N');
-                            console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
-                        }, index * results[index].delay)
-                    });
-                }
-                //res.send(apiResponse('command is sent'));
+                var execCommands = async () => {
+                    await sendCrestCommands(results);
+                    await sendModelCommands(results);
+                };
+                execCommands();
             }
         });
     }
