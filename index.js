@@ -675,7 +675,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     } else {
         lang = req.body.lang
     }
-    let sqlQuery = "SELECT name, is_projector, duration FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
+    let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
     let sqlQuery2 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
 
     // return res.send(apiResponse(sqlQuery2));
@@ -709,7 +709,10 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         var duration = 0;
         for (var i = 0; i < results.length; i++) {
             if (results[i].is_projector) {
-                p_video = results[i].name
+                p_video = [
+                    results[i].name,
+                    results[i].is_image,
+                ]
                 break;
             }
         }
