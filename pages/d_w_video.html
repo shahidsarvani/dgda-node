@@ -22,7 +22,7 @@
 
 <body>
     <section class="container">
-        <video class="w-100" id="video" muted loop autoplay>
+        <video class="w-100" id="video" loop autoplay>
             Your browser does not support the video tag.
         </video>
         <button type="button" class="btn btn-primary" onclick="openFullscreen()">Full Screen</button>
@@ -84,8 +84,11 @@
             video.removeAttribute('autoplay')
             video.src = "../media/video/" + msg[0];
             video.play();
-            var quality = video.getVideoPlaybackQuality()
-            console.log("Video Quality: " + JSON.stringify(quality))
+            setTimeout(() => {
+                var quality = video.getVideoPlaybackQuality()
+                console.log((quality));
+            }, 5000)
+            // console.log(JSON.stringify(quality))
             video.onended = () => {
                 console.log('video ended')
                 var sock = socket.emit('default_video', msg);
