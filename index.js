@@ -685,6 +685,7 @@ function sendModelCommands2(id, results, duration) {
             if (modelSocket) r = modelSocket.write(process.env.MODEL_UP);
             else console.log('Model Up')
             const formatted = dt.format('Y-m-d H:M:S:N');
+            videoInterval[id].isModalUpExecuted = true
             console.log(formatted + ": " + process.env.MODEL_UP + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalUpDelay);
         }, remainingModalUpDuration * 1000)
     }
@@ -697,6 +698,7 @@ function sendModelCommands2(id, results, duration) {
             if (modelSocket) r = modelSocket.write(process.env.MODEL_DOWN);
             else console.log('Model Down')
             const formatted = dt.format('Y-m-d H:M:S:N');
+            videoInterval[id].isModalDownExecuted = true
             console.log(formatted + ": " + process.env.MODEL_DOWN + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalDownDelay);
         }, remainingModalDownDuration * 1000)
     }
