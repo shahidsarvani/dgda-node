@@ -597,7 +597,7 @@ function sendCrestCommands(results) {
             return result.name;
         }
     });
-    crestCommands = crestCommands.filter(function( element ) {
+    crestCommands = crestCommands.filter(function (element) {
         return element !== undefined;
     });
     console.log(crestCommands);
@@ -618,14 +618,14 @@ function sendModelCommands(results) {
         if (result.device == process.env.MODEL_DEVICE)
             return result.name;
     })
-    modelCommands = modelCommands.filter(function( element ) {
+    modelCommands = modelCommands.filter(function (element) {
         return element !== undefined;
-     });
+    });
     console.log(modelCommands);
     var r, dt;
     modelCommands.forEach(async function (item, index) {
-        if(item == process.env.MODEL_UP) await sleep(results[index].model_up_delay * 1000);
-        if(item == process.env.MODEL_DOWN) await sleep(results[index].model_down_delay * 1000);
+        if (item == process.env.MODEL_UP) await sleep(results[index].model_up_delay * 1000);
+        if (item == process.env.MODEL_DOWN) await sleep(results[index].model_down_delay * 1000);
         setTimeout(function () {
             dt = dateTime.create();
             if (modelSocket) r = modelSocket.write(item);
@@ -654,14 +654,14 @@ function sendModelCommands2(id, results, duration) {
             if (result.device === process.env.MODEL_DEVICE)
                 return result.name;
         })
-        modelCommands = modelCommands.filter(function( element ) {
+        modelCommands = modelCommands.filter(function (element) {
             return element !== undefined;
         });
 
         let r, dt;
         modelCommands.forEach(async function (item, index) {
-            if(item === process.env.MODEL_UP) videoInterval[id].modalUpDelay = results[index].model_up_delay;
-            if(item === process.env.MODEL_DOWN) videoInterval[id].modalDownDelay = results[index].model_down_delay;
+            if (item === process.env.MODEL_UP) videoInterval[id].modalUpDelay = results[index].model_up_delay;
+            if (item === process.env.MODEL_DOWN) videoInterval[id].modalDownDelay = results[index].model_down_delay;
         });
     }
 
@@ -692,9 +692,9 @@ function sendModelCommands2(id, results, duration) {
 
 function sleep(ms) {
     return new Promise((resolve) => {
-      setTimeout(resolve, ms);
+        setTimeout(resolve, ms);
     });
-  }
+}
 
 app.post('/api/room/:id/play_scene', async (req, res) => {
     let lang = 'en';
@@ -702,7 +702,7 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         lang = req.body.lang
     }
 
-    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = "+req.params.id+" ORDER BY command_scene.sort_order ASC";
+    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
     let sqlQuery2 = "SELECT media.name, media.is_projector, media.duration, media.is_image FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
 
     try {

@@ -2,6 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const mysql = require('mysql');
+const mysql2 = require('mysql2-promise')();
 const cors = require('cors');
 const http = require('http');
 const net = require('net');
@@ -16,6 +17,7 @@ require('dotenv').config();
 var crestSocket;
 var modelSocket;
 var dateTime = require('node-datetime');
+const moment = require("moment");
 var videoInterval = {}
 
 app.use(bodyParser.json());
@@ -29,6 +31,18 @@ app.use(
 );
 
 const conn = mysql.createConnection({
+    host: 'localhost',
+    user: 'root', /* MySQL User */
+    password: '', /* MySQL Password */
+    database: 'dgda' /* MySQL Database */
+    // host: '18.170.155.197',
+    // user: 'admin_dgda_cms_user', /* MySQL User */
+    // password: '3S~9f7a7b', /* MySQL Password */
+    // database: 'admin_dgda_cms_db' /* MySQL Database */
+});
+
+const pool = mysql2.createPool({
+    connectionLimit: 10,
     host: 'localhost',
     user: 'root', /* MySQL User */
     password: '', /* MySQL Password */
@@ -460,6 +474,8 @@ app.get('/api/room/:id/video/resume', (req, res) => {
 })
 
 app.get('/api/room/:id/video/forward', (req, res) => {
+
+    sendModelCommands2(req.params.id);
     // socket.on('video', (msg) => {
     if (req.params.id == process.env.WS_ID) {
         io.emit('video_wsw', 'forward');
@@ -490,6 +506,13 @@ app.get('/api/room/:id/video/back', (req, res) => {
 })
 
 app.get('/api/room/:id/video/pause', (req, res) => {
+    clearInterval(videoInterval[req.params.id].modalUpInterval)
+    clearInterval(videoInterval[req.params.id].modalDownInterval)
+
+    videoInterval[req.params.id].modalUpInterval = null;
+    videoInterval[req.params.id].modalDownInterval = null;
+    videoInterval[req.params.id].lastPlayed = new Date();
+
     // socket.on('video', (msg) => {
     if (req.params.id == process.env.WS_ID) {
         io.emit('video_wsw', 'pause');
@@ -568,14 +591,13 @@ app.get('/api/light_scene_command/:id', (req, res) => {
     });
 })
 
-function sendCrestCommands(results)
-{
+function sendCrestCommands(results) {
     var crestCommands = results.map((result) => {
         if (result.device == process.env.CREST_DEVICE) {
             return result.name;
         }
     });
-    crestCommands = crestCommands.filter(function( element ) {
+    crestCommands = crestCommands.filter(function (element) {
         return element !== undefined;
     });
     console.log(crestCommands);
@@ -591,20 +613,19 @@ function sendCrestCommands(results)
     });
 }
 
-function sendModelCommands(results)
-{
+function sendModelCommands(results) {
     var modelCommands = results.map((result) => {
         if (result.device == process.env.MODEL_DEVICE)
             return result.name;
     })
-    modelCommands = modelCommands.filter(function( element ) {
+    modelCommands = modelCommands.filter(function (element) {
         return element !== undefined;
-     });
+    });
     console.log(modelCommands);
     var r, dt;
     modelCommands.forEach(async function (item, index) {
-        if(item == process.env.MODEL_UP) await sleep(results[index].model_up_delay * 1000);
-        if(item == process.env.MODEL_DOWN) await sleep(results[index].model_down_delay * 1000);
+        if (item == process.env.MODEL_UP) await sleep(results[index].model_up_delay * 1000);
+        if (item == process.env.MODEL_DOWN) await sleep(results[index].model_down_delay * 1000);
         setTimeout(function () {
             dt = dateTime.create();
             if (modelSocket) r = modelSocket.write(item);
@@ -614,21 +635,74 @@ function sendModelCommands(results)
     });
 }
 
+function sendModelCommands2(id, results, duration) {
+    if (!videoInterval[id]) {
+        videoInterval[id] = {
+            modalUpInterval: null,
+            modalDownInterval: null,
+            duration,
+            isModalUpExecuted: false,
+            isModalDownExecuted: false,
+            modalUpDelay: 0,
+            modalDownDelay: 0,
+            lastPlayed: new Date()
+        }
+    }
+
+    if (results?.length) {
+        let modelCommands = results.map((result) => {
+            if (result.device === process.env.MODEL_DEVICE)
+                return result.name;
+        })
+        modelCommands = modelCommands.filter(function (element) {
+            return element !== undefined;
+        });
+
+        let r, dt;
+        modelCommands.forEach(async function (item, index) {
+            if (item === process.env.MODEL_UP) videoInterval[id].modalUpDelay = results[index].model_up_delay;
+            if (item === process.env.MODEL_DOWN) videoInterval[id].modalDownDelay = results[index].model_down_delay;
+        });
+    }
+
+    const playedDuration = moment().subtract(moment(videoInterval[id].lastPlayed));
+
+    const remainingModalUpDuration = videoInterval[id].modalUpDelay - playedDuration;
+    if (remainingModalUpDuration > 0 && !videoInterval[id].isModalUpExecuted) {
+        videoInterval[id].modalUpDelay = setInterval(function () {
+            const dt = dateTime.create();
+            let r;
+            if (modelSocket) r = modelSocket.write(process.env.MODEL_UP);
+            const formatted = dt.format('Y-m-d H:M:S:N');
+            console.log(formatted + ": " + process.env.MODEL_UP + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalUpDelay);
+        }, remainingModalUpDuration * 1000)
+    }
+
+    const remainingModalDownDuration = videoInterval[id].modalDownDelay - playedDuration;
+    if (remainingModalDownDuration > 0 && !videoInterval[id].isModalDownExecuted) {
+        videoInterval[id].modalDownDelay = setInterval(function () {
+            const dt = dateTime.create();
+            let r;
+            if (modelSocket) r = modelSocket.write(process.env.MODEL_DOWN);
+            const formatted = dt.format('Y-m-d H:M:S:N');
+            console.log(formatted + ": " + process.env.MODEL_DOWN + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalDownDelay);
+        }, remainingModalDownDuration * 1000)
+    }
+}
+
 function sleep(ms) {
     return new Promise((resolve) => {
-      setTimeout(resolve, ms);
+        setTimeout(resolve, ms);
     });
-  }
+}
 
 app.post('/api/room/:id/play_scene', (req, res) => {
-    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = "+req.params.id+" ORDER BY command_scene.sort_order ASC";
-    var lang;
-    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
-        lang = 'en';
-    } else {
+    let lang = 'en';
+    if (!(req.body.constructor === Object && Object.keys(req.body).length === 0)) {
         lang = req.body.lang
     }
-    // return res.send(sqlQuery);
+
+    let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
     let sqlQuery2 = "SELECT media.name, media.is_projector, media.duration, media.is_image FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
 
     // return res.send(apiResponse(sqlQuery));
@@ -674,7 +748,7 @@ app.post('/api/room/:id/play_scene', (req, res) => {
             }
         }
         // return res.send(apiResponse(w_video));
-        if (req.params.id == process.env.WS_ID) {
+        if (req.params.id === process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
             io.emit('change_video_wsp', p_video);
         } else {
