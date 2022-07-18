@@ -18,7 +18,7 @@ var modelSocket;
 var dateTime = require('node-datetime');
 const moment = require("moment");
 var videoInterval = {}
-const pool = require('mysql2-promise').createPool({
+const pool = require('promise-mysql2').createPool({
     connectionLimit: 10,
     host: 'localhost',
     user: 'root', /* MySQL User */
