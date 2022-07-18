@@ -679,26 +679,28 @@ function sendModelCommands2(id, results, duration) {
 
     const remainingModalUpDuration = videoInterval[id].modalUpDelay - playedDuration;
     if (remainingModalUpDuration > 0 && !videoInterval[id].isModalUpExecuted) {
-        videoInterval[id].modalUpDelay = setInterval(function () {
+        videoInterval[id].modalUpInterval = setInterval(function () {
             const dt = dateTime.create();
             let r;
             if (modelSocket) r = modelSocket.write(process.env.MODEL_UP);
             else console.log('Model Up')
             const formatted = dt.format('Y-m-d H:M:S:N');
             videoInterval[id].isModalUpExecuted = true
+            clearInterval(videoInterval[req.params.id].modalUpInterval)
             console.log(formatted + ": " + process.env.MODEL_UP + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalUpDelay);
         }, remainingModalUpDuration * 1000)
     }
 
     const remainingModalDownDuration = videoInterval[id].modalDownDelay - playedDuration;
     if (remainingModalDownDuration > 0 && !videoInterval[id].isModalDownExecuted) {
-        videoInterval[id].modalDownDelay = setInterval(function () {
+        videoInterval[id].modalDownInterval = setInterval(function () {
             const dt = dateTime.create();
             let r;
             if (modelSocket) r = modelSocket.write(process.env.MODEL_DOWN);
             else console.log('Model Down')
             const formatted = dt.format('Y-m-d H:M:S:N');
             videoInterval[id].isModalDownExecuted = true
+            clearInterval(videoInterval[req.params.id].modalDownInterval)
             console.log(formatted + ": " + process.env.MODEL_DOWN + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalDownDelay);
         }, remainingModalDownDuration * 1000)
     }
