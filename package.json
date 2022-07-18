@@ -23,6 +23,7 @@
     "node-datetime": "^2.1.2",
     "nodemon": "^2.0.16",
     "promise-mysql2": "^1.0.0",
-    "socket.io": "^4.5.1"
+    "socket.io": "^4.5.1",
+    "vlc-simple-player": "^0.5.1"
   }
 }

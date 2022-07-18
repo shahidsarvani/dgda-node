@@ -33,7 +33,6 @@ const pool = require('promise-mysql2').createPool({
 app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
 app.use('/media/video', express.static('media/video'));
-app.use('/wsw.js', express.static('/'));
 app.use(cors());
 app.use(
     express.urlencoded({
@@ -77,9 +76,6 @@ app.get('/', (req, res) => {
 app.get('/d_w_video', (req, res) => {
     res.sendFile(__dirname + '/pages/d_w_video.html');
 });
-app.get('/ws_w_video_vlc', (req, res) => {
-    res.sendFile(__dirname + '/pages/ws_w_video_vlc.html');
-});
 
 app.get('/d_p_video', (req, res) => {
     res.sendFile(__dirname + '/pages/d_p_video.html');
@@ -108,13 +104,13 @@ modelServer.on("connection", (socket) => {
 });
 
 io.on('connection', (socket) => {
-    console.log('a user connected from room: ' + socket.handshake.query.room_id);
+    console.log('a user connected');
     socket.on('disconnect', () => {
         console.log('user disconnected');
     });
-    // socket.on('video', (msg) => {
-    //     io.emit('video', msg);
-    // });
+    socket.on('video', (msg) => {
+        io.emit('video', msg);
+    });
 
 
     // let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
