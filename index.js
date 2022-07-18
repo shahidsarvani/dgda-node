@@ -767,7 +767,7 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         }
         return res.send(apiResponse(duration));
     } catch (err) {
-        return res.send(apiResponseBad(null));
+        return res.send(apiResponseBad(err));
     }
     // return res.send(apiResponse(sqlQuery));
     // if (process.env.APP_ENV === 'prod') {
