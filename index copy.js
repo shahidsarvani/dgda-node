@@ -7,17 +7,14 @@ const http = require('http');
 const net = require('net');
 const server = http.createServer(app);
 const crestServer = net.createServer();
-const wswallServer = net.createServer();
-const wsprojServer = net.createServer();
-const diwallServer = net.createServer();
-const diprojServer = net.createServer();
 const modelServer = net.createServer();
 const { Server } = require("socket.io");
 const io = new Server(server);
 require('dotenv').config();
 //const child_process = require('child_process');
 //const child_script_path = 'tcp.js';
-var crestSocket, modelSocket, wswallSocket, wsprojSocket, diwallSocket, diprojSocket;
+var crestSocket;
+var modelSocket;
 var dateTime = require('node-datetime');
 const moment = require("moment");
 var videoInterval = {}
@@ -36,7 +33,6 @@ const pool = require('promise-mysql2').createPool({
 app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
 app.use('/media/video', express.static('media/video'));
-app.use('/wsw.js', express.static('/'));
 app.use(cors());
 app.use(
     express.urlencoded({
@@ -80,9 +76,6 @@ app.get('/', (req, res) => {
 app.get('/d_w_video', (req, res) => {
     res.sendFile(__dirname + '/pages/d_w_video.html');
 });
-app.get('/ws_w_video_vlc', (req, res) => {
-    res.sendFile(__dirname + '/pages/ws_w_video_vlc.html');
-});
 
 app.get('/d_p_video', (req, res) => {
     res.sendFile(__dirname + '/pages/d_p_video.html');
@@ -110,42 +103,15 @@ modelServer.on("connection", (socket) => {
     modelSocket.setKeepAlive(true);
 });
 
-wswallServer.on("connection", (socket) => {
-    console.log("Wadi Safar Video Wall connection details - ", socket.remoteAddress + ":" + socket.remotePort);
-    wswallSocket = socket;
-    socket.setKeepAlive(true); // to keep the status connected with Wadi Safar Video Wall
-    wswallSocket.setKeepAlive(true);
-});
-
-wsprojServer.on("connection", (socket) => {
-    console.log("Wadi Safar Projector connection details - ", socket.remoteAddress + ":" + socket.remotePort);
-    wsprojSocket = socket;
-    socket.setKeepAlive(true); // to keep the status connected with Wadi Safar Projector
-    wsprojSocket.setKeepAlive(true);
-});
-
-diwallServer.on("connection", (socket) => {
-    console.log("Diriyah Video Wall connection details - ", socket.remoteAddress + ":" + socket.remotePort);
-    diwallSocket = socket;
-    socket.setKeepAlive(true); // to keep the status connected with Diriyah Video Wall
-    diwallSocket.setKeepAlive(true);
-});
-
-diprojServer.on("connection", (socket) => {
-    console.log("Diriyah Projector connection details - ", socket.remoteAddress + ":" + socket.remotePort);
-    diprojSocket = socket;
-    socket.setKeepAlive(true); // to keep the status connected with Diriyah Projector
-    diprojSocket.setKeepAlive(true);
-});
-
 io.on('connection', (socket) => {
-    console.log('a user connected from room: ' + socket.handshake.query.room_id);
+    console.log('a user connected');
     socket.on('disconnect', () => {
         console.log('user disconnected');
     });
-    // socket.on('video', (msg) => {
-    //     io.emit('video', msg);
-    // });
+    socket.on('video', (msg) => {
+        io.emit('video', msg);
+    });
+
 
     // let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
     let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.lang = 'ar' ORDER BY media.id DESC";
@@ -924,20 +890,4 @@ crestServer.listen(process.env.CREST_PORT, () => {
 
 modelServer.listen(process.env.MODEL_PORT, () => {
     console.log('Model server started on port %j', modelServer.address().port);
-});
-
-wswallServer.listen(process.env.WSWPORT, () => {
-    console.log('Model server started on port %j', wswallServer.address().port);
-});
-
-wsprojServer.listen(process.env.WSPPORT, () => {
-    console.log('Model server started on port %j', wsprojServer.address().port);
-});
-
-diwallServer.listen(process.env.DWPORT, () => {
-    console.log('Model server started on port %j', diwallServer.address().port);
-});
-
-diprojServer.listen(process.env.DPPORT, () => {
-    console.log('Model server started on port %j', diprojServer.address().port);
 });
