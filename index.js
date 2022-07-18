@@ -111,10 +111,52 @@ modelServer.on("connection", (socket) => {
 });
 
 wswallServer.on("connection", (socket) => {
-    console.log("Wadi Safar Video Wall connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    var clientAddress = `${socket.remoteAddress}:${socket.remotePort}`;
+    console.log(`Wadi Safar Video Wall connected - ${clientAddress}`);
     wswallSocket = socket;
     socket.setKeepAlive(true); // to keep the status connected with Wadi Safar Video Wall
     wswallSocket.setKeepAlive(true);
+    
+    let sqlQuery2 = "SELECT media.name FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.is_projector = 0 ORDER BY media.id DESC";
+    
+    // console.log(apiResponse(sqlQuery2))
+    var w_video = '';
+    let query2 = conn.query(sqlQuery2, (err, results) => {
+        if (err) {
+            console.log(err)
+        };
+        // console.log(apiResponse(results))
+        // return;
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
+                w_video = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                break;
+            }
+        }
+        // io.emit('change_default_video_wsp', p_video);
+        console.log('command is sent')
+    });
+
+    socket.on('data', (data) => {
+        console.log(data)
+        // console.log(`Client ${clientAddress}: ${data}`);
+        // socket.write(`${clientAddress} said ${data}` + '\n');
+        if(data === 'play_default') {
+            console.log(w_video)
+            socket.write(w_video);
+        }
+    });
+
+    // Add a 'close' event handler to this instance of socket
+    socket.on('close', (data) => {
+        socket.write(`${clientAddress} disconnected\n`);
+        console.log(`connection closed: ${clientAddress}`);
+    });
+
+    // Add a 'error' event handler to this instance of socket
+    socket.on('error', (err) => {
+        console.log(`Error occurred in ${clientAddress}: ${err.message}`);
+    });
 });
 
 wsprojServer.on("connection", (socket) => {
@@ -300,11 +342,11 @@ app.get('/api/rooms', (req, res) => {
         };
         results.map(function (result) {
             if (process.env.APP_ENV == 'local') {
-                result.image = 'http://localhost:3001/media/images/' + result.image
+                result.image = process.env.LOCAL_IMG_PATH + result.image
             } else {
-                result.image = 'http://192.168.10.4:3001/media/images/' + result.image
+                result.image = process.env.PROD_IMG_PATH + result.image
             }
-            // result.image_ar = /* 'http://192.168.10.4:3001/media/images/' + */ result.image_ar
+            // result.image_ar = /* process.env.PROD_IMG_PATH + */ result.image_ar
         })
         res.send(apiResponse(results));
     });
@@ -318,12 +360,12 @@ app.get('/api/rooms/ar', (req, res) => {
             res.send(apiResponseBad(null));
         };
         results.map(function (result) {
-            // result.image = /* 'http://192.168.10.4:3001/media/images/' + */ result.image
-            // result.image = 'http://192.168.10.4:3001/media/images/' + result.image
+            // result.image = /* process.env.PROD_IMG_PATH + */ result.image
+            // result.image = process.env.PROD_IMG_PATH + result.image
             if (process.env.APP_ENV == 'local') {
-                result.image = 'http://localhost:3001/media/images/' + result.image
+                result.image = process.env.LOCAL_IMG_PATH + result.image
             } else {
-                result.image = 'http://192.168.10.4:3001/media/images/' + result.image
+                result.image = process.env.PROD_IMG_PATH + result.image
             }
         })
         res.send(apiResponse(results));
@@ -341,11 +383,11 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
             };
             for (let i = 0; i < phases.length; i++) {
                 if (process.env.APP_ENV == 'local') {
-                    phases[i].image = 'http://localhost:3001/media/images/' + phases[i].image
+                    phases[i].image = process.env.LOCAL_IMG_PATH + phases[i].image
                 } else {
-                    phases[i].image = 'http://192.168.10.4:3001/media/images/' + phases[i].image
+                    phases[i].image = process.env.PROD_IMG_PATH + phases[i].image
                 }
-                // phases[i].image = 'http://192.168.10.4:3001/media/images/' + phases[i].image
+                // phases[i].image = process.env.PROD_IMG_PATH + phases[i].image
                 let sqlQuery = "SELECT id, name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
@@ -375,11 +417,11 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
             };
             for (let i = 0; i < phases.length; i++) {
                 if (process.env.APP_ENV == 'local') {
-                    phases[i].image = 'http://localhost:3001/media/images/' + phases[i].image
+                    phases[i].image = process.env.LOCAL_IMG_PATH + phases[i].image
                 } else {
-                    phases[i].image = 'http://192.168.10.4:3001/media/images/' + phases[i].image
+                    phases[i].image = process.env.PROD_IMG_PATH + phases[i].image
                 }
-                // phases[i].image = 'http://192.168.10.4:3001/media/images/' + phases[i].image
+                // phases[i].image = process.env.PROD_IMG_PATH + phases[i].image
                 let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
@@ -408,11 +450,11 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
             }
             scenes.map(function (result) {
                 if (process.env.APP_ENV == 'local') {
-                    result.image = 'http://localhost:3001/media/images/' + result.image_en
+                    result.image = process.env.LOCAL_IMG_PATH + result.image_en
                 } else {
-                    result.image = 'http://192.168.10.4:3001/media/images/' + result.image_en
+                    result.image = process.env.PROD_IMG_PATH + result.image_en
                 }
-                // result.image = 'http://192.168.10.4:3001/media/images/' + result.image_en
+                // result.image = process.env.PROD_IMG_PATH + result.image_en
             })
             res.send(apiResponse(scenes));
         });
@@ -432,11 +474,11 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
             };
             scenes.map(function (result) {
                 if (process.env.APP_ENV == 'local') {
-                    result.image = 'http://localhost:3001/media/images/' + result.image
+                    result.image = process.env.LOCAL_IMG_PATH + result.image
                 } else {
-                    result.image = 'http://192.168.10.4:3001/media/images/' + result.image
+                    result.image = process.env.PROD_IMG_PATH + result.image
                 }
-                // result.image = 'http://192.168.10.4:3001/media/images/' + result.image
+                // result.image = process.env.PROD_IMG_PATH + result.image
             })
             res.send(apiResponse(scenes));
         });
@@ -797,8 +839,8 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
 
         // return res.send(apiResponse(w_video));
         if (req.params.id === process.env.WS_ID) {
-            io.emit('change_video_wsw', w_video);
-            io.emit('change_video_wsp', p_video);
+            wswallSocket.write('change_video_wsw', w_video);
+            // io.emit('change_video_wsp', p_video);
         } else {
             io.emit('change_video_dw', w_video);
             io.emit('change_video_dp', p_video);
