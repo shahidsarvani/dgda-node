@@ -696,7 +696,7 @@ function sleep(ms) {
     });
 }
 
-app.post('/api/room/:id/play_scene', async (req, res) => {
+app.post('/api/room/:id/play_scene', (req, res) => {
     let lang = 'en';
     if (!(req.body.constructor === Object && Object.keys(req.body).length === 0)) {
         lang = req.body.lang
@@ -705,46 +705,48 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
     let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
     let sqlQuery2 = "SELECT media.name, media.is_projector, media.duration, media.is_image FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
 
-    try {
-        const [results] = await pool.query(sqlQuery);
-        const [results2] = await pool.query(sqlQuery2);
-
-        if (!results?.length || !results2?.length)
+    // return res.send(apiResponse(sqlQuery));
+    if (process.env.APP_ENV == 'prod') {
+        let query = conn.query(sqlQuery, (err, results) => {
+            if (err) {
+                return res.send(apiResponseBad(null));
+            } else {
+                var execCommands = async () => {
+                    await sendCrestCommands(results);
+                    await sendModelCommands(results);
+                };
+                execCommands();
+            }
+        });
+    }
+    let query2 = conn.query(sqlQuery2, (err, results) => {
+        if (err) {
             return res.send(apiResponseBad(null));
-
-        let p_video, w_video, duration = 0;
-        for (let i = 0; i < results2.length; i++) {
-            if (results2[i].is_projector) {
+        };
+        // return res.send(apiResponse(results));
+        var p_video = '';
+        var duration = 0;
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].is_projector) {
                 p_video = [
-                    results2[i].name,
-                    results2[i].is_image,
+                    results[i].name,
+                    results[i].is_image,
                 ]
                 break;
             }
         }
-
-        for (let i = 0; i < results2.length; i++) {
-            if (!results2[i].is_projector) {
+        var w_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
                 w_video = [
-                    results2[i].name,
+                    results[i].name,
                     req.params.id,
                     lang
                 ]
-                duration = results2[i].duration
+                duration = results[i].duration
                 break;
             }
         }
-
-        if (process.env.APP_ENV === 'prod') {
-            const execCommands = async () => {
-                await sendCrestCommands(results);
-                // await sendModelCommands2(req.params.id, results);
-                sendModelCommands2(req.params.id, results, duration);
-            };
-
-            await execCommands();
-        }
-
         // return res.send(apiResponse(w_video));
         if (req.params.id === process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
@@ -754,26 +756,7 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
             io.emit('change_video_dp', p_video);
         }
         return res.send(apiResponse(duration));
-    } catch (err) {
-        return res.send(apiResponseBad(null));
-    }
-    // return res.send(apiResponse(sqlQuery));
-    // if (process.env.APP_ENV === 'prod') {
-    //     let query = conn.query(sqlQuery, (err, results) => {
-    //         if (err) {
-    //             return res.send(apiResponseBad(null));
-    //         } else {
-    //
-    //         }
-    //     });
-    // }
-    // let query2 = conn.query(sqlQuery2, (err, results2) => {
-    //     if (err) {
-    //         return res.send(apiResponseBad(null));
-    //     };
-    //     // return res.send(apiResponse(results));
-    //
-    // });
+    });
 
 })
 
