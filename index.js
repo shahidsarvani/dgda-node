@@ -2,7 +2,6 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const app = express();
 const mysql = require('mysql');
-const mysql2 = require('mysql2-promise')();
 const cors = require('cors');
 const http = require('http');
 const net = require('net');
@@ -19,6 +18,17 @@ var modelSocket;
 var dateTime = require('node-datetime');
 const moment = require("moment");
 var videoInterval = {}
+const pool = require('mysql2-promise').createPool({
+    connectionLimit: 10,
+    host: 'localhost',
+    user: 'root', /* MySQL User */
+    password: '', /* MySQL Password */
+    database: 'dgda' /* MySQL Database */
+    // host: '18.170.155.197',
+    // user: 'admin_dgda_cms_user', /* MySQL User */
+    // password: '3S~9f7a7b', /* MySQL Password */
+    // database: 'admin_dgda_cms_db' /* MySQL Database */
+});
 
 app.use(bodyParser.json());
 app.use('/media/images', express.static('media/images'));
@@ -41,17 +51,17 @@ const conn = mysql.createConnection({
     // database: 'admin_dgda_cms_db' /* MySQL Database */
 });
 
-const pool = mysql2.createPool({
-    connectionLimit: 10,
-    host: 'localhost',
-    user: 'root', /* MySQL User */
-    password: '', /* MySQL Password */
-    database: 'dgda' /* MySQL Database */
-    // host: '18.170.155.197',
-    // user: 'admin_dgda_cms_user', /* MySQL User */
-    // password: '3S~9f7a7b', /* MySQL Password */
-    // database: 'admin_dgda_cms_db' /* MySQL Database */
-});
+// const pool = mysql2.createPool({
+//     connectionLimit: 10,
+//     host: 'localhost',
+//     user: 'root', /* MySQL User */
+//     password: '', /* MySQL Password */
+//     database: 'dgda' /* MySQL Database */
+//     // host: '18.170.155.197',
+//     // user: 'admin_dgda_cms_user', /* MySQL User */
+//     // password: '3S~9f7a7b', /* MySQL Password */
+//     // database: 'admin_dgda_cms_db' /* MySQL Database */
+// });
 
 conn.connect((err) => {
     if (err) throw err;
