@@ -31,6 +31,7 @@ socket.on(process.env.CHANGE_VIDEO_EVENT, (msg) => {
 
 
 function default_play_video(video) {
+	console.log('default')
   if (!player) {
     player = new VLC(video.toString());
   } else {
@@ -40,6 +41,7 @@ function default_play_video(video) {
 }
 
 function play_video(video) {
+  console.log(video)
   player = new VLC(video[0].toString());
   player.on('statuschange', (error, status) => {
     if (error) return console.error(error);
@@ -54,9 +56,13 @@ function play_video(video) {
 }
 
 function change_video(video) {
+  console.log('change video')
+console.log(video)
   if (!player) {
+    console.log('new video')
     play_video(video)
   } else {
+    console.log('running video')
     player.request('/requests/status.json?command=pl_empty', () => { });
     player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { })
     player.on('statuschange', (error, status) => {
@@ -73,6 +79,7 @@ function change_video(video) {
 }
 
 socket.on(process.env.VIDEO_EVENTS, (msg) => {
+
   switch (msg) {
     case "play":
       if(player) player.request('/requests/status.json?command=pl_pause', () => { })
@@ -90,7 +97,7 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       if(player) player.request('/requests/status.json?command=pl_stop', () => { })
       socket.emit('default_video', {
         "room_id": process.env.ROOM_ID,
-        "lang": video[1]
+        "lang": 'en'
       })
       break;
     case "up":

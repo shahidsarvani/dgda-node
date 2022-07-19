@@ -107,10 +107,10 @@ io.on('connection', (socket) => {
     let room_id = socket.handshake.query.room_id;
     let is_projector = socket.handshake.query.is_projector;
     console.log('a user connected from room: ' + room_id);
-    console.log('a user connected from room: ' + is_projector);
+    console.log('a user connected fOR PROJECTOR: ' + is_projector);
 
     if(room_id && is_projector) {
-        let sqlQuery = "SELECT media.name FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
+        let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
                 console.log(err)
@@ -137,73 +137,30 @@ io.on('connection', (socket) => {
                     }
                 }
             } else {
-                event = 'change_default_video_dw'
-                for (var i = 0; i < results.length; i++) {
-                    if (!results[i].is_projector) {
-                        videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
-                        break;
+                if(is_projector == 0) {
+                    event = 'change_default_video_dw'
+                    for (var i = 0; i < results.length; i++) {
+                        if (!results[i].is_projector) {
+                            videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                            break;
+                        }
+                    }
+                } else {
+                    event = 'change_default_video_dp'
+                    for (var i = 0; i < results.length; i++) {
+                        if (results[i].is_projector) {
+                            videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                            break;
+                        }
                     }
                 }
             }
-            // console.log(apiResponse(results))
-            // return;
-            // var p_video = '';
-            // for (var i = 0; i < results.length; i++) {
-            //     if (results[i].is_projector) {
-            //         p_video = results[i].name
-            //         break;
-            //     }
-            // }
-            // console.log(videourl)
+            console.log(event)
+            console.log(videourl)
             io.emit(event, videourl);
-            // io.emit('change_default_video_wsp', p_video);
             console.log('command is sent')
         });
     }
-    // let sqlQuery3 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
-    // let sqlQuery4 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 AND media.lang = 'ar' ORDER BY media.id DESC";
-    // console.log(sqlQuery2);
-    // return;
-    // let query3 = conn.query(sqlQuery3, (err, results) => {
-    //     if (err) {
-    //         console.log(err)
-    //     } else {
-    //         var child_argv = results.map((result) => {
-    //             return result.name
-    //         })
-    //         var r;
-    //         child_argv.forEach(function (item, index) {
-    //             setTimeout(function () {
-    //                 r = crestSocket.write(item);
-    //                 console.log("Command sent to crestron with status: " + r);
-    //             }, results[index].delay)
-    //         });
-    //     }
-    // });
-    // let query4 = conn.query(sqlQuery4, (err, results) => {
-    //     if (err) {
-    //         console.log(err)
-    //     };
-    //     // console.log(apiResponse(results))
-    //     // return;
-    //     var p_video = '';
-    //     for (var i = 0; i < results.length; i++) {
-    //         if (results[i].is_projector) {
-    //             p_video = results[i].name
-    //             break;
-    //         }
-    //     }
-    //     var w_video = '';
-    //     for (var i = 0; i < results.length; i++) {
-    //         if (!results[i].is_projector) {
-    //             w_video = results[i].name
-    //             break;
-    //         }
-    //     }
-    //     io.emit('change_default_video_dw', w_video);
-    //     io.emit('change_default_video_dp', p_video);
-    //     console.log('command is sent')
-    // });
 
     socket.on('default_video', (msg) => {
         console.log(msg)
@@ -234,19 +191,19 @@ io.on('connection', (socket) => {
             var p_video = '';
             for (var i = 0; i < results.length; i++) {
                 if (results[i].is_projector) {
-                    p_video = results[i].name
+                    p_video = encodeURI(process.env.PROD_VIDEO_PATH+results[i].name)
                     break;
                 }
             }
             var w_video = '';
             for (var i = 0; i < results.length; i++) {
                 if (!results[i].is_projector) {
-                    w_video = results[i].name
+                    w_video = encodeURI(process.env.PROD_VIDEO_PATH+results[i].name)
                     break;
                 }
             }
 
-            if (msg[1] == process.env.WS_ID) {
+            if (msg.room_id == process.env.WS_ID) {
                 io.emit('change_default_video_wsw', w_video);
                 io.emit('change_default_video_wsp', p_video);
             } else {
@@ -488,7 +445,8 @@ app.get('/api/room/:id/video/resume', (req, res) => {
 
 app.get('/api/room/:id/video/forward', (req, res) => {
 
-    sendModelCommands2(req.params.id);
+    // sendModelCommands2(req.params.id);
+    // sendModelCommands(req.params.id);
     // socket.on('video', (msg) => {
     if (req.params.id == process.env.WS_ID) {
         io.emit('video_wsw', 'forward');
@@ -674,28 +632,28 @@ function sendModelCommands2(id, results, duration) {
 
     const remainingModalUpDuration = videoInterval[id].modalUpDelay - playedDuration;
     if (remainingModalUpDuration > 0 && !videoInterval[id].isModalUpExecuted) {
-        videoInterval[id].modalUpInterval = setInterval(function () {
+        videoInterval[id].modalUpInterval = setTimeout(function () {
             const dt = dateTime.create();
             let r;
             if (modelSocket) r = modelSocket.write(process.env.MODEL_UP);
             else console.log('Model Up')
             const formatted = dt.format('Y-m-d H:M:S:N');
             videoInterval[id].isModalUpExecuted = true
-            clearInterval(videoInterval[req.params.id].modalUpInterval)
+            // clearInterval(videoInterval[req.params.id].modalUpInterval)
             console.log(formatted + ": " + process.env.MODEL_UP + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalUpDelay);
         }, remainingModalUpDuration * 1000)
     }
 
     const remainingModalDownDuration = videoInterval[id].modalDownDelay - playedDuration;
     if (remainingModalDownDuration > 0 && !videoInterval[id].isModalDownExecuted) {
-        videoInterval[id].modalDownInterval = setInterval(function () {
+        videoInterval[id].modalDownInterval = setTimeout(function () {
             const dt = dateTime.create();
             let r;
             if (modelSocket) r = modelSocket.write(process.env.MODEL_DOWN);
             else console.log('Model Down')
             const formatted = dt.format('Y-m-d H:M:S:N');
             videoInterval[id].isModalDownExecuted = true
-            clearInterval(videoInterval[req.params.id].modalDownInterval)
+            // clearInterval(videoInterval[req.params.id].modalDownInterval)
             console.log(formatted + ": " + process.env.MODEL_DOWN + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalDownDelay);
         }, remainingModalDownDuration * 1000)
     }
@@ -726,11 +684,11 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         let p_video, w_video, duration = 0;
         for (let i = 0; i < results2.length; i++) {
             if (results2[i].is_projector) {
-                // p_video = [
-                //     results2[i].name,
-                //     results2[i].is_image,
-                // ]
-                p_video = encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name)
+                p_video = [
+                    encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name),
+                    results2[i].is_image,
+                ]
+                // p_video = encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name)
                 break;
             }
         }
@@ -750,8 +708,8 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         if (process.env.APP_ENV === 'prod') {
             const execCommands = async () => {
                 await sendCrestCommands(results);
-                // await sendModelCommands2(req.params.id, results);
-                sendModelCommands2(req.params.id, results, duration);
+                await sendModelCommands2(req.params.id, results);
+                // await sendModelCommands(req.params.id, results, duration);
             };
 
             await execCommands();
@@ -760,13 +718,13 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         // return res.send(apiResponse(w_video));
         if (req.params.id === process.env.WS_ID) {
 
-            console.log(w_video)
-            console.log(p_video)
+            console.log('WALL'+w_video)
+            console.log('pROJECTOR'+p_video)
             io.emit('change_video_wsw', w_video);
             io.emit('change_video_wsp', p_video);
-            // wswallSocket.write(w_video);
-            // io.emit('change_video_wsp', p_video);
         } else {
+            console.log('WALL'+w_video)
+            console.log('pROJECTOR'+p_video)
             io.emit('change_video_dw', w_video);
             io.emit('change_video_dp', p_video);
         }
@@ -774,23 +732,6 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
     } catch (err) {
         return res.send(apiResponseBad(err));
     }
-    // return res.send(apiResponse(sqlQuery));
-    // if (process.env.APP_ENV === 'prod') {
-    //     let query = conn.query(sqlQuery, (err, results) => {
-    //         if (err) {
-    //             return res.send(apiResponseBad(null));
-    //         } else {
-    //
-    //         }
-    //     });
-    // }
-    // let query2 = conn.query(sqlQuery2, (err, results2) => {
-    //     if (err) {
-    //         return res.send(apiResponseBad(null));
-    //     };
-    //     // return res.send(apiResponse(results));
-    //
-    // });
 
 })
 
@@ -828,7 +769,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         for (var i = 0; i < results.length; i++) {
             if (results[i].is_projector) {
                 p_video = [
-                    results[i].name,
+                    encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
                     results[i].is_image,
                 ]
                 break;
@@ -837,7 +778,10 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         var w_video = '';
         for (var i = 0; i < results.length; i++) {
             if (!results[i].is_projector) {
-                w_video = results[i].name
+                w_video = [
+                    encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
+                    lang
+                ]
                 duration = results[i].duration
                 break;
             }
