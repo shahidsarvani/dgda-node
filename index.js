@@ -545,17 +545,12 @@ app.post('/api/room/:id/video/stop', (req, res) => {
     } else {
         lang = req.body.lang
     }
-    var msg = [
-        'stop',
-        req.params.id,
-        lang
-    ]
     // return res.send(apiResponse(msg[1]));
     if (req.params.id == process.env.WS_ID) {
-        io.emit('video_stop_wsw', msg);
+        io.emit('video_wsw', msg);
         io.emit('video_wsp', 'stop');
     } else {
-        io.emit('video_stop_dw', msg);
+        io.emit('video_dw', msg);
         io.emit('video_dp', 'stop');
     }
     // io.emit('video_stop', msg);
@@ -565,24 +560,21 @@ app.post('/api/room/:id/video/stop', (req, res) => {
 
 app.get('/api/volume/increase', (req, res) => {
     // socket.on('video', (msg) => {
-    io.emit('video', 'up');
-    io.emit('video_p', 'up');
+    io.emit('video_wsw', 'up');
     // });
     res.send(apiResponse('Volume increase command is sent'));
 })
 
 app.get('/api/volume/decrease', (req, res) => {
     // socket.on('video', (msg) => {
-    io.emit('video', 'down');
-    io.emit('video_p', 'down');
+    io.emit('video_wsw', 'down');
     // });
     res.send(apiResponse('Volume decrease command is sent'));
 })
 
 app.get('/api/volume/mute', (req, res) => {
     // socket.on('video', (msg) => {
-    io.emit('video', 'mute');
-    io.emit('video_p', 'mute');
+    io.emit('video_wsw', 'mute');
     // });
     res.send(apiResponse('Volume mute command is sent'));
 })
