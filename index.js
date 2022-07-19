@@ -547,10 +547,10 @@ app.post('/api/room/:id/video/stop', (req, res) => {
     }
     // return res.send(apiResponse(msg[1]));
     if (req.params.id == process.env.WS_ID) {
-        io.emit('video_wsw', msg);
+        io.emit('video_wsw', 'stop');
         io.emit('video_wsp', 'stop');
     } else {
-        io.emit('video_dw', msg);
+        io.emit('video_dw', 'stop');
         io.emit('video_dp', 'stop');
     }
     // io.emit('video_stop', msg);
