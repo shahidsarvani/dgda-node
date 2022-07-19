@@ -7,11 +7,17 @@ const http = require('http');
 const net = require('net');
 const server = http.createServer(app);
 const crestServer = net.createServer();
+const wswallServer = net.createServer();
+const wsprojServer = net.createServer();
+const diwallServer = net.createServer();
+const diprojServer = net.createServer();
 const modelServer = net.createServer();
 const { Server } = require("socket.io");
 const io = new Server(server);
 require('dotenv').config();
-var crestSocket, modelSocket;
+//const child_process = require('child_process');
+//const child_script_path = 'tcp.js';
+var crestSocket, modelSocket, wswallSocket, wsprojSocket, diwallSocket, diprojSocket;
 var dateTime = require('node-datetime');
 const moment = require("moment");
 var videoInterval = {}
@@ -21,6 +27,10 @@ const pool = require('promise-mysql2').createPool({
     user: 'root', /* MySQL User */
     password: '', /* MySQL Password */
     database: 'dgda' /* MySQL Database */
+    // host: '18.170.155.197',
+    // user: 'admin_dgda_cms_user', /* MySQL User */
+    // password: '3S~9f7a7b', /* MySQL Password */
+    // database: 'admin_dgda_cms_db' /* MySQL Database */
 });
 
 app.use(bodyParser.json());
@@ -38,6 +48,10 @@ const conn = mysql.createConnection({
     user: 'root', /* MySQL User */
     password: '', /* MySQL Password */
     database: 'dgda' /* MySQL Database */
+    // host: '18.170.155.197',
+    // user: 'admin_dgda_cms_user', /* MySQL User */
+    // password: '3S~9f7a7b', /* MySQL Password */
+    // database: 'admin_dgda_cms_db' /* MySQL Database */
 });
 
 // const pool = mysql2.createPool({
@@ -58,32 +72,33 @@ conn.connect((err) => {
 });
 
 
-// app.get('/', (req, res) => {
-//     res.sendFile(__dirname + '/pages/index.html');
-// });
+app.get('/', (req, res) => {
+    res.sendFile(__dirname + '/pages/index.html');
+});
 
-// app.get('/d_w_video', (req, res) => {
-//     res.sendFile(__dirname + '/pages/d_w_video.html');
-// });
-// app.get('/ws_w_video_vlc', (req, res) => {
-//     res.sendFile(__dirname + '/pages/ws_w_video_vlc.html');
-// });
+app.get('/d_w_video', (req, res) => {
+    res.sendFile(__dirname + '/pages/d_w_video.html');
+});
+app.get('/ws_w_video_vlc', (req, res) => {
+    res.sendFile(__dirname + '/pages/ws_w_video_vlc.html');
+});
 
-// app.get('/d_p_video', (req, res) => {
-//     res.sendFile(__dirname + '/pages/d_p_video.html');
-// });
-// app.get('/ws_w_video', (req, res) => {
-//     res.sendFile(__dirname + '/pages/ws_w_video.html');
-// });
+app.get('/d_p_video', (req, res) => {
+    res.sendFile(__dirname + '/pages/d_p_video.html');
+});
+app.get('/ws_w_video', (req, res) => {
+    res.sendFile(__dirname + '/pages/ws_w_video.html');
+});
 
-// app.get('/ws_p_video', (req, res) => {
-//     res.sendFile(__dirname + '/pages/ws_p_video.html');
-// });
+app.get('/ws_p_video', (req, res) => {
+    res.sendFile(__dirname + '/pages/ws_p_video.html');
+});
 
-// function setSocketDefault(socket) {
-//     socket.setKeepAlive(true); // to keep the status connected
-//     socket.setEncoding('utf8'); // to keep the communication textual
-// }
+function setSocketDefault(socket)
+{
+    socket.setKeepAlive(true); // to keep the status connected
+    socket.setEncoding('utf8'); // to keep the communication textual
+}
 
 crestServer.on("connection", (socket) => {
     console.log("Crestron connection details - ", socket.remoteAddress + ":" + socket.remotePort);
@@ -99,67 +114,132 @@ modelServer.on("connection", (socket) => {
     modelSocket.setKeepAlive(true); // to keep the status connected
 });
 
-
-io.on('connection', (socket) => {
-    socket.on('disconnect', () => {
-        console.log('user disconnected');
-    });
-    let room_id = socket.handshake.query.room_id;
-    let is_projector = socket.handshake.query.is_projector;
-    console.log('a user connected from room: ' + room_id);
-    console.log('a user connected from room: ' + is_projector);
-
-    let sqlQuery = "SELECT media.name FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
-    let query = conn.query(sqlQuery, (err, results) => {
+wswallServer.on("connection", (socket) => {
+    var clientAddress = `${socket.remoteAddress}:${socket.remotePort}`;
+    console.log(`Wadi Safar Video Wall connected - ${clientAddress}`);
+    wswallSocket = socket;
+    setSocketDefault(socket);
+    setSocketDefault(wswallSocket);
+    
+    let sqlQuery2 = "SELECT media.name FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.is_projector = 0 ORDER BY media.id DESC";
+    
+    // console.log(apiResponse(sqlQuery2))
+    var w_video = '';
+    let query2 = conn.query(sqlQuery2, (err, results) => {
         if (err) {
             console.log(err)
         };
-        var videourl = '';
-        var event = '';
-        console.log(results)
-        if (room_id == process.env.WS_ID) {
-            if(is_projector == 0) {
-                event = 'change_default_video_wsw'
-                for (var i = 0; i < results.length; i++) {
-                    if (!results[i].is_projector) {
-                        videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
-                        break;
-                    }
-                }
-            } else {
-                event = 'change_default_video_wsp'
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i].is_projector) {
-                        videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
-                        break;
-                    }
-                }
-            }
-        } else {
-            event = 'change_default_video_dw'
-            for (var i = 0; i < results.length; i++) {
-                if (!results[i].is_projector) {
-                    videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
-                    break;
-                }
-            }
-        }
         // console.log(apiResponse(results))
         // return;
-        // var p_video = '';
-        // for (var i = 0; i < results.length; i++) {
-        //     if (results[i].is_projector) {
-        //         p_video = results[i].name
-        //         break;
-        //     }
-        // }
-        // console.log(videourl)
-        io.emit(event, videourl);
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
+                w_video = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                //socket.write(w_video, 'utf8');
+                break;
+            }
+        }
         // io.emit('change_default_video_wsp', p_video);
         console.log('command is sent')
     });
+
+    socket.on('data', (data) => {
+        console.log(data)
+        // console.log(`Client ${clientAddress}: ${data}`);
+        // socket.write(`${clientAddress} said ${data}` + '\n');
+        if(data.toString() === 'play_default') {
+            console.log(w_video)
+            socket.write(w_video);
+        }
+    });
+
+    // Add a 'close' event handler to this instance of socket
+    socket.on('close', (data) => {
+        socket.write(`${clientAddress} disconnected\n`);
+        console.log(`connection closed: ${clientAddress}`);
+    });
+
+    // Add a 'error' event handler to this instance of socket
+    socket.on('error', (err) => {
+        console.log(`Error occurred in ${clientAddress}: ${err.message}`);
+    });
+});
+
+wsprojServer.on("connection", (socket) => {
+    console.log("Wadi Safar Projector connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    wsprojSocket = socket;
+    socket.setKeepAlive(true); // to keep the status connected with Wadi Safar Projector
+    wsprojSocket.setKeepAlive(true);
+});
+
+diwallServer.on("connection", (socket) => {
+    console.log("Diriyah Video Wall connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    diwallSocket = socket;
+    socket.setKeepAlive(true); // to keep the status connected with Diriyah Video Wall
+    diwallSocket.setKeepAlive(true);
+});
+
+diprojServer.on("connection", (socket) => {
+    console.log("Diriyah Projector connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    diprojSocket = socket;
+    socket.setKeepAlive(true); // to keep the status connected with Diriyah Projector
+    diprojSocket.setKeepAlive(true);
+});
+
+io.on('connection', (socket) => {
+    console.log('a user connected from room: ' + socket.handshake.query.room_id);
+    socket.on('disconnect', () => {
+        console.log('user disconnected');
+    });
+    // socket.on('video', (msg) => {
+    //     io.emit('video', msg);
+    // });
+
+    // let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
+    let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.lang = 'ar' ORDER BY media.id DESC";
+    // console.log(sqlQuery2);
+    // return;
+    // let query = conn.query(sqlQuery, (err, results) => {
+    //     if (err) {
+    //         console.log(err)
+    //     } else {
+    //         var child_argv = results.map((result) => {
+    //             return result.name
+    //         })
+    //         var r;
+    //         child_argv.forEach(function (item, index) {
+    //             setTimeout(function () {
+    //                 r = crestSocket.write(item);
+    //                 console.log("Command sent to crestron with status: " + r);
+    //             }, results[index].delay)
+    //         });
+    //     }
+    // });
+    let query2 = conn.query(sqlQuery2, (err, results) => {
+        if (err) {
+            console.log(err)
+        };
+        // console.log(apiResponse(results))
+        // return;
+        var p_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].is_projector) {
+                p_video = results[i].name
+                break;
+            }
+        }
+        var w_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
+                w_video = results[i].name
+                break;
+            }
+        }
+        io.emit('change_default_video_wsw', w_video);
+        io.emit('change_default_video_wsp', p_video);
+        console.log('command is sent')
+    });
     // let sqlQuery3 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
-    // let sqlQuery4 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 AND media.lang = 'ar' ORDER BY media.id DESC";
+    let sqlQuery4 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 AND media.lang = 'ar' ORDER BY media.id DESC";
     // console.log(sqlQuery2);
     // return;
     // let query3 = conn.query(sqlQuery3, (err, results) => {
@@ -178,30 +258,30 @@ io.on('connection', (socket) => {
     //         });
     //     }
     // });
-    // let query4 = conn.query(sqlQuery4, (err, results) => {
-    //     if (err) {
-    //         console.log(err)
-    //     };
-    //     // console.log(apiResponse(results))
-    //     // return;
-    //     var p_video = '';
-    //     for (var i = 0; i < results.length; i++) {
-    //         if (results[i].is_projector) {
-    //             p_video = results[i].name
-    //             break;
-    //         }
-    //     }
-    //     var w_video = '';
-    //     for (var i = 0; i < results.length; i++) {
-    //         if (!results[i].is_projector) {
-    //             w_video = results[i].name
-    //             break;
-    //         }
-    //     }
-    //     io.emit('change_default_video_dw', w_video);
-    //     io.emit('change_default_video_dp', p_video);
-    //     console.log('command is sent')
-    // });
+    let query4 = conn.query(sqlQuery4, (err, results) => {
+        if (err) {
+            console.log(err)
+        };
+        // console.log(apiResponse(results))
+        // return;
+        var p_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].is_projector) {
+                p_video = results[i].name
+                break;
+            }
+        }
+        var w_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
+                w_video = results[i].name
+                break;
+            }
+        }
+        io.emit('change_default_video_dw', w_video);
+        io.emit('change_default_video_dp', p_video);
+        console.log('command is sent')
+    });
 
     socket.on('default_video', (msg) => {
         console.log(msg)
@@ -732,23 +812,21 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         let p_video, w_video, duration = 0;
         for (let i = 0; i < results2.length; i++) {
             if (results2[i].is_projector) {
-                // p_video = [
-                //     results2[i].name,
-                //     results2[i].is_image,
-                // ]
-                p_video = encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name)
+                p_video = [
+                    results2[i].name,
+                    results2[i].is_image,
+                ]
                 break;
             }
         }
 
         for (let i = 0; i < results2.length; i++) {
             if (!results2[i].is_projector) {
-                // w_video = [
-                //     results2[i].name,
-                //     req.params.id,
-                //     lang
-                // ]
-                w_video = encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name)
+                w_video = [
+                    results2[i].name,
+                    req.params.id,
+                    lang
+                ]
                 duration = results2[i].duration
                 break;
             }
@@ -767,11 +845,7 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         // return res.send(apiResponse(w_video));
         if (req.params.id === process.env.WS_ID) {
 
-            console.log(w_video)
-            console.log(p_video)
-            io.emit('change_video_wsw', w_video);
-            io.emit('change_video_wsp', p_video);
-            // wswallSocket.write(w_video);
+            wswallSocket.write(w_video);
             // io.emit('change_video_wsp', p_video);
         } else {
             io.emit('change_video_dw', w_video);
@@ -900,18 +974,18 @@ modelServer.listen(process.env.MODEL_PORT, () => {
     console.log('Model server started on port %j', modelServer.address().port);
 });
 
-// wswallServer.listen(process.env.WSWPORT, () => {
-//     console.log('Model server started on port %j', wswallServer.address().port);
-// });
+wswallServer.listen(process.env.WSWPORT, () => {
+    console.log('Model server started on port %j', wswallServer.address().port);
+});
 
-// wsprojServer.listen(process.env.WSPPORT, () => {
-//     console.log('Model server started on port %j', wsprojServer.address().port);
-// });
+wsprojServer.listen(process.env.WSPPORT, () => {
+    console.log('Model server started on port %j', wsprojServer.address().port);
+});
 
-// diwallServer.listen(process.env.DWPORT, () => {
-//     console.log('Model server started on port %j', diwallServer.address().port);
-// });
+diwallServer.listen(process.env.DWPORT, () => {
+    console.log('Model server started on port %j', diwallServer.address().port);
+});
 
-// diprojServer.listen(process.env.DPPORT, () => {
-//     console.log('Model server started on port %j', diprojServer.address().port);
-// });
+diprojServer.listen(process.env.DPPORT, () => {
+    console.log('Model server started on port %j', diprojServer.address().port);
+});
