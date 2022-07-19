@@ -48,7 +48,6 @@ function play_video(video) {
     if (status.time + 1 === status.length)
       socket.emit('default_video', {
         "room_id": process.env.ROOM_ID,
-        // "is_projector": process.env.IS_PROJECTOR,
         "lang": video[1]
       })
   });
@@ -67,45 +66,47 @@ function change_video(video) {
       if (status.time + 1 === status.length)
         socket.emit('default_video', {
           "room_id": process.env.ROOM_ID,
-          // "is_projector": process.env.IS_PROJECTOR,
           "lang": video[1]
         })
     });
   }
 }
 
-// client.on('wsw_video', (data) => {
-//   switch (data) {
-//     case "play":
-//       player.request('/requests/status.json?command=pl_pause', () => { })
-//       break;
-//     case "pause":
-//       player.request('/requests/status.json?command=pl_pause', () => { })
-//       break;
-//     case "forward":
-//       player.request('/requests/status.json?command=seek&val=+10s', () => { })
-//       break;
-//     case "back":
-//       player.request('/requests/status.json?command=seek&val=-10s', () => { })
-//       break;
-//     case "stop":
-//       player.request('/requests/status.json?command=pl_stop', () => { })
-//       play_video(data)
-//       break;
-//     case "up":
-//       player.request('/requests/status.json?command=volume&val=+10', () => { })
-//       break;
-//     case "down":
-//       player.request('/requests/status.json?command=volume&val=-10', () => { })
-//       break;
-//     case "mute":
-//       player.request('/requests/status.json?command=volume&val=0', () => { })
-//       break;
-//     default:
-//       console.log('Error!')
-//       break;
-//   }
-// });
+socket.on(process.env.VIDEO_EVENTS, (msg) => {
+  switch (msg) {
+    case "play":
+      if(player) player.request('/requests/status.json?command=pl_pause', () => { })
+      break;
+    case "pause":
+      if(player) player.request('/requests/status.json?command=pl_pause', () => { })
+      break;
+    case "forward":
+      if(player) player.request('/requests/status.json?command=seek&val=+10s', () => { })
+      break;
+    case "back":
+      if(player) player.request('/requests/status.json?command=seek&val=-10s', () => { })
+      break;
+    case "stop":
+      if(player) player.request('/requests/status.json?command=pl_stop', () => { })
+      socket.emit('default_video', {
+        "room_id": process.env.ROOM_ID,
+        "lang": video[1]
+      })
+      break;
+    case "up":
+      if(player) player.request('/requests/status.json?command=volume&val=+10', () => { })
+      break;
+    case "down":
+      if(player) player.request('/requests/status.json?command=volume&val=-10', () => { })
+      break;
+    case "mute":
+      if(player) player.request('/requests/status.json?command=volume&val=0', () => { })
+      break;
+    default:
+      console.log('Error!')
+      break;
+  }
+});
 
 // client.on('change_video_wsw', (data) => {
 //   console.log(data)
