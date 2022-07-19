@@ -10,18 +10,18 @@ let player;
 const socket = io(url, {
   query: {
     "room_id": "1",
-    "is_projector": "0"
+    "is_projector": "1"
   }
 });
 socket.on('connect', function (socket) {
   console.log('Connected!');
 })
-socket.on('change_default_video_wsw', (msg) => {
+socket.on('change_default_video_wsp', (msg) => {
   if (msg && msg.length) {
     play_video(msg)
   }
 })
-socket.on('change_video_wsw', (msg) => {
+socket.on('change_video_wsp', (msg) => {
   if (msg && msg.length) {
     change_video(msg)
   }
