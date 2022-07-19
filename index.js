@@ -109,55 +109,57 @@ io.on('connection', (socket) => {
     console.log('a user connected from room: ' + room_id);
     console.log('a user connected from room: ' + is_projector);
 
-    let sqlQuery = "SELECT media.name FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
-    let query = conn.query(sqlQuery, (err, results) => {
-        if (err) {
-            console.log(err)
-        };
-        var videourl = '';
-        var event = '';
-        console.log(results)
-        if (room_id == process.env.WS_ID) {
-            if(is_projector == 0) {
-                event = 'change_default_video_wsw'
+    if(room_id && is_projector) {
+        let sqlQuery = "SELECT media.name FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
+        let query = conn.query(sqlQuery, (err, results) => {
+            if (err) {
+                console.log(err)
+            };
+            var videourl = '';
+            var event = '';
+            // console.log(results)
+            if (room_id == process.env.WS_ID) {
+                if(is_projector == 0) {
+                    event = 'change_default_video_wsw'
+                    for (var i = 0; i < results.length; i++) {
+                        if (!results[i].is_projector) {
+                            videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                            break;
+                        }
+                    }
+                } else {
+                    event = 'change_default_video_wsp'
+                    for (var i = 0; i < results.length; i++) {
+                        if (results[i].is_projector) {
+                            videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                            break;
+                        }
+                    }
+                }
+            } else {
+                event = 'change_default_video_dw'
                 for (var i = 0; i < results.length; i++) {
                     if (!results[i].is_projector) {
                         videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
                         break;
                     }
                 }
-            } else {
-                event = 'change_default_video_wsp'
-                for (var i = 0; i < results.length; i++) {
-                    if (results[i].is_projector) {
-                        videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
-                        break;
-                    }
-                }
             }
-        } else {
-            event = 'change_default_video_dw'
-            for (var i = 0; i < results.length; i++) {
-                if (!results[i].is_projector) {
-                    videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
-                    break;
-                }
-            }
-        }
-        // console.log(apiResponse(results))
-        // return;
-        // var p_video = '';
-        // for (var i = 0; i < results.length; i++) {
-        //     if (results[i].is_projector) {
-        //         p_video = results[i].name
-        //         break;
-        //     }
-        // }
-        // console.log(videourl)
-        io.emit(event, videourl);
-        // io.emit('change_default_video_wsp', p_video);
-        console.log('command is sent')
-    });
+            // console.log(apiResponse(results))
+            // return;
+            // var p_video = '';
+            // for (var i = 0; i < results.length; i++) {
+            //     if (results[i].is_projector) {
+            //         p_video = results[i].name
+            //         break;
+            //     }
+            // }
+            // console.log(videourl)
+            io.emit(event, videourl);
+            // io.emit('change_default_video_wsp', p_video);
+            console.log('command is sent')
+        });
+    }
     // let sqlQuery3 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay FROM `commands` INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
     // let sqlQuery4 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 2 AND scenes.is_default = 1 AND media.lang = 'ar' ORDER BY media.id DESC";
     // console.log(sqlQuery2);
@@ -206,8 +208,8 @@ io.on('connection', (socket) => {
     socket.on('default_video', (msg) => {
         console.log(msg)
         console.log('show ended')
-        let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
-        let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg[1] + " AND scenes.is_default = 1 AND media.lang = '" + msg[2] + "' ORDER BY media.id DESC";
+        let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = " + msg.room_id + " AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
+        let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg.room_id + " AND scenes.is_default = 1 AND media.lang = '" + msg.lang + "' ORDER BY media.id DESC";
         // console.log(sqlQuery2);
         // return;
         if (process.env.APP_ENV == 'prod') {
@@ -743,12 +745,11 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
 
         for (let i = 0; i < results2.length; i++) {
             if (!results2[i].is_projector) {
-                // w_video = [
-                //     results2[i].name,
-                //     req.params.id,
-                //     lang
-                // ]
-                w_video = encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name)
+                w_video = [
+                    encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name),
+                    lang
+                ]
+                // w_video = encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name)
                 duration = results2[i].duration
                 break;
             }

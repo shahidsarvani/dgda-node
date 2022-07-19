@@ -9,40 +9,68 @@ let player;
 
 const socket = io(url, {
   query: {
-    "room_id": "1",
-    "is_projector": "0"
+    "room_id": process.env.ROOM_ID,
+    "is_projector": process.env.IS_PROJECTOR
   }
 });
 socket.on('connect', function (socket) {
   console.log('Connected!');
 })
-socket.on('change_default_video_wsw', (msg) => {
+socket.on(process.env.CHANGE_DEFAULT_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
-    play_video(msg)
+    console.log(msg)
+    default_play_video(msg)
   }
 })
-socket.on('change_video_wsw', (msg) => {
+socket.on(process.env.CHANGE_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
+    console.log(msg)
     change_video(msg)
   }
 })
 
 
+function default_play_video(video) {
+  if (!player) {
+    player = new VLC(video.toString());
+  } else {
+    player.request('/requests/status.json?command=pl_empty', () => { });
+    player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { })
+  }
+}
 
 function play_video(video) {
-  player = new VLC(video.toString());
-  // player.on('statuschange', (error, status) => {
-  //   if (error) return console.error(error);
-  //   // console.log('timechange', status.time);
-  //   if (status.time === 1) console.log(status);
-  // });
+  player = new VLC(video[0].toString());
+  player.on('statuschange', (error, status) => {
+    if (error) return console.error(error);
+    console.log('current Time', status.time);
+    console.log('totall Time', status.length);
+    if (status.time + 1 === status.length)
+      socket.emit('default_video', {
+        "room_id": process.env.ROOM_ID,
+        // "is_projector": process.env.IS_PROJECTOR,
+        "lang": video[1]
+      })
+  });
 }
 
 function change_video(video) {
-  if(!player) {
+  if (!player) {
     play_video(video)
   } else {
-    player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { })
+    player.request('/requests/status.json?command=pl_empty', () => { });
+    player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { })
+    player.on('statuschange', (error, status) => {
+      if (error) return console.error(error);
+      console.log('current Time', status.time);
+      console.log('totall Time', status.length);
+      if (status.time + 1 === status.length)
+        socket.emit('default_video', {
+          "room_id": process.env.ROOM_ID,
+          // "is_projector": process.env.IS_PROJECTOR,
+          "lang": video[1]
+        })
+    });
   }
 }
 
