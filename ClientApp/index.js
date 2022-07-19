@@ -15,12 +15,19 @@ client.connect(PORT, HOST, () => {
 });
 
 client.on('data', (data) => {
-  console.log(`Client received: ${data}`);
-  play_video(data)
+  console.log(`Client received: ` + data);
+  play_video(data);
 });
 
+
+
 function play_video(video) {
-  var player = new VLC(data);
+  var player = new VLC(video.toString());
+  player.on('statuschange', (error, status) => {
+    if (error) return console.error(error);
+    // console.log('timechange', status.time);
+    if (status.time === 1) console.log(status);    
+  });
 }
 
 client.on('wsw_video', (data) => {

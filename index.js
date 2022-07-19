@@ -95,27 +95,32 @@ app.get('/ws_p_video', (req, res) => {
     res.sendFile(__dirname + '/pages/ws_p_video.html');
 });
 
+function setSocketDefault(socket)
+{
+    socket.setKeepAlive(true); // to keep the status connected
+    socket.setEncoding('utf8'); // to keep the communication textual
+}
 
 crestServer.on("connection", (socket) => {
     console.log("Crestron connection details - ", socket.remoteAddress + ":" + socket.remotePort);
     crestSocket = socket;
-    socket.setKeepAlive(true); // to keep the status connected with crestron
-    crestSocket.setKeepAlive(true);
+    socket.setKeepAlive(true); // to keep the status connected
+    crestSocket.setKeepAlive(true); // to keep the status connected
 });
 
 modelServer.on("connection", (socket) => {
     console.log("Model connection details - ", socket.remoteAddress + ":" + socket.remotePort);
     modelSocket = socket;
-    socket.setKeepAlive(true); // to keep the status connected with crestron
-    modelSocket.setKeepAlive(true);
+    socket.setKeepAlive(true); // to keep the status connected
+    modelSocket.setKeepAlive(true); // to keep the status connected
 });
 
 wswallServer.on("connection", (socket) => {
     var clientAddress = `${socket.remoteAddress}:${socket.remotePort}`;
     console.log(`Wadi Safar Video Wall connected - ${clientAddress}`);
     wswallSocket = socket;
-    socket.setKeepAlive(true); // to keep the status connected with Wadi Safar Video Wall
-    wswallSocket.setKeepAlive(true);
+    setSocketDefault(socket);
+    setSocketDefault(wswallSocket);
     
     let sqlQuery2 = "SELECT media.name FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = 1 AND scenes.is_default = 1 AND media.is_projector = 0 ORDER BY media.id DESC";
     
@@ -130,6 +135,7 @@ wswallServer.on("connection", (socket) => {
         for (var i = 0; i < results.length; i++) {
             if (!results[i].is_projector) {
                 w_video = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                //socket.write(w_video, 'utf8');
                 break;
             }
         }
@@ -141,7 +147,7 @@ wswallServer.on("connection", (socket) => {
         console.log(data)
         // console.log(`Client ${clientAddress}: ${data}`);
         // socket.write(`${clientAddress} said ${data}` + '\n');
-        if(data === 'play_default') {
+        if(data.toString() === 'play_default') {
             console.log(w_video)
             socket.write(w_video);
         }
@@ -839,7 +845,8 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
 
         // return res.send(apiResponse(w_video));
         if (req.params.id === process.env.WS_ID) {
-            wswallSocket.write('change_video_wsw', w_video);
+
+            wswallSocket.write(w_video);
             // io.emit('change_video_wsp', p_video);
         } else {
             io.emit('change_video_dw', w_video);
