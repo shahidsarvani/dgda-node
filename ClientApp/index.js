@@ -33,7 +33,16 @@ socket.on(process.env.CHANGE_VIDEO_EVENT, (msg) => {
 function default_play_video(video) {
 	console.log('default')
   if (!player) {
-    player = new VLC(video.toString());
+    options = process.env.VLCCOMMANDS.split(',');
+    var args = [];
+    options.forEach((option) => {
+      args.push(option);
+    })
+    var defaultArguments = {
+      "arguments" : args
+    };
+    console.log(defaultArguments.arguments);
+    player = new VLC(video.toString(), defaultArguments);
   } else {
     player.request('/requests/status.json?command=pl_empty', () => { });
     player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { })
@@ -101,13 +110,19 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       })
       break;
     case "up":
-      if(player) player.request('/requests/status.json?command=volume&val=+10', () => { })
+      if(!process.env.IS_PROJECTOR) {
+        if(player) player.request('/requests/status.json?command=volume&val=+10', () => { })
+      }
       break;
     case "down":
-      if(player) player.request('/requests/status.json?command=volume&val=-10', () => { })
+      if(!process.env.IS_PROJECTOR) {
+        if(player) player.request('/requests/status.json?command=volume&val=-10', () => { })
+      }
       break;
     case "mute":
-      if(player) player.request('/requests/status.json?command=volume&val=0', () => { })
+      if(!process.env.IS_PROJECTOR) {
+        if(player) player.request('/requests/status.json?command=volume&val=0', () => { })
+      }
       break;
     default:
       console.log('Error!')
