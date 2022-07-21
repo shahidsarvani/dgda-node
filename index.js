@@ -708,7 +708,7 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         if (process.env.APP_ENV === 'prod') {
             const execCommands = async () => {
                 await sendCrestCommands(results);
-                await sendModelCommands2(req.params.id, results);
+                await sendModelCommands(results);
                 // await sendModelCommands(req.params.id, results, duration);
             };
 
