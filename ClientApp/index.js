@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const SERVER_HOST = process.env.SERVER_HOST;
 const SERVER_PORT = process.env.SERVER_PORT;
@@ -29,21 +28,30 @@ socket.on(process.env.CHANGE_VIDEO_EVENT, (msg) => {
   }
 })
 
+function getDefaultArgs()
+ {
+  options = process.env.VLCCOMMANDS.split(',');
+  const search = ';';
+  const replacer = new RegExp(search, 'g')
+  var args = [];
+  options.forEach((option) => {
+    args.push(option.replace(replacer, ','));
+  })
+  var defaultArguments = {
+    "arguments" : args
+  };
+  console.log(defaultArguments.arguments);
+  return defaultArguments;
+ }
 
-function default_play_video(video) {
+ function default_play_video(video) {
 	console.log('default')
   if (!player) {
-    options = process.env.VLCCOMMANDS.split(',');
-    var args = [];
-    options.forEach((option) => {
-      args.push(option);
-    })
-    var defaultArguments = {
-      "arguments" : args
-    };
-    console.log(defaultArguments.arguments);
-    player = new VLC(video.toString(), defaultArguments);
+    player = new VLC(video.toString(), getDefaultArgs());
   } else {
+    // setTimeout(() => {
+      
+    // }, 1000);
     player.request('/requests/status.json?command=pl_empty', () => { });
     player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { })
   }
@@ -51,11 +59,11 @@ function default_play_video(video) {
 
 function play_video(video) {
   console.log(video)
-  player = new VLC(video[0].toString());
+  player = new VLC(video[0].toString(), getDefaultArgs());
   player.on('statuschange', (error, status) => {
     if (error) return console.error(error);
-    console.log('current Time', status.time);
-    console.log('totall Time', status.length);
+    //console.log('current Time', status.time);
+    //console.log('totall Time', status.length);
     if (status.time + 1 === status.length)
       socket.emit('default_video', {
         "room_id": process.env.ROOM_ID,
@@ -72,12 +80,15 @@ console.log(video)
     play_video(video)
   } else {
     console.log('running video')
+    // setTimeout(() => {
+      
+    // }, 1000);
     player.request('/requests/status.json?command=pl_empty', () => { });
     player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { })
     player.on('statuschange', (error, status) => {
       if (error) return console.error(error);
-      console.log('current Time', status.time);
-      console.log('totall Time', status.length);
+      //console.log('current Time', status.time);
+      //console.log('totall Time', status.length);
       if (status.time + 1 === status.length)
         socket.emit('default_video', {
           "room_id": process.env.ROOM_ID,

@@ -106,8 +106,7 @@ io.on('connection', (socket) => {
     });
     let room_id = socket.handshake.query.room_id;
     let is_projector = socket.handshake.query.is_projector;
-    console.log('a user connected from room: ' + room_id);
-    console.log('a user connected fOR PROJECTOR: ' + is_projector);
+    console.log('a user connected from room: ' + room_id + ' with projector: ' + is_projector);
 
     if(room_id && is_projector) {
         let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
@@ -155,8 +154,8 @@ io.on('connection', (socket) => {
                     }
                 }
             }
-            console.log(event)
-            console.log(videourl)
+            //console.log(event)
+            //console.log(videourl)
             io.emit(event, videourl);
             console.log('command is sent')
         });
@@ -477,12 +476,12 @@ app.get('/api/room/:id/video/back', (req, res) => {
 })
 
 app.get('/api/room/:id/video/pause', (req, res) => {
-    clearInterval(videoInterval[req.params.id].modalUpInterval)
-    clearInterval(videoInterval[req.params.id].modalDownInterval)
+    // clearInterval(videoInterval[req.params.id].modalUpInterval)
+    // clearInterval(videoInterval[req.params.id].modalDownInterval)
 
-    videoInterval[req.params.id].modalUpInterval = null;
-    videoInterval[req.params.id].modalDownInterval = null;
-    videoInterval[req.params.id].lastPlayed = new Date();
+    // videoInterval[req.params.id].modalUpInterval = null;
+    // videoInterval[req.params.id].modalDownInterval = null;
+    // videoInterval[req.params.id].lastPlayed = new Date();
 
     // socket.on('video', (msg) => {
     if (req.params.id == process.env.WS_ID) {
@@ -516,24 +515,30 @@ app.post('/api/room/:id/video/stop', (req, res) => {
     res.send(apiResponse('Video stop command is sent'));
 })
 
-app.get('/api/volume/increase', (req, res) => {
-    // socket.on('video', (msg) => {
-    io.emit('video_wsw', 'up');
-    // });
+app.get('/api/room/:id/volume/increase', (req, res) => {
+    if (req.params.id == process.env.WS_ID) {
+        io.emit('video_wsw', 'up');
+    } else {
+        io.emit('video_dw', 'up');
+    }
     res.send(apiResponse('Volume increase command is sent'));
 })
 
-app.get('/api/volume/decrease', (req, res) => {
-    // socket.on('video', (msg) => {
-    io.emit('video_wsw', 'down');
-    // });
+app.get('/api/room/:id/volume/decrease', (req, res) => {
+    if (req.params.id == process.env.WS_ID) {
+        io.emit('video_wsw', 'down');
+    } else {
+        io.emit('video_dw', 'down');
+    }
     res.send(apiResponse('Volume decrease command is sent'));
 })
 
-app.get('/api/volume/mute', (req, res) => {
-    // socket.on('video', (msg) => {
-    io.emit('video_wsw', 'mute');
-    // });
+app.get('/api/room/:id/volume/mute', (req, res) => {
+    if (req.params.id == process.env.WS_ID) {
+        io.emit('video_wsw', 'mute');
+    } else {
+        io.emit('video_dw', 'mute');
+    }
     res.send(apiResponse('Volume mute command is sent'));
 })
 
