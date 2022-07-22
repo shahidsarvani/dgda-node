@@ -49,9 +49,6 @@ function getDefaultArgs()
   if (!player) {
     player = new VLC(video.toString(), getDefaultArgs());
   } else {
-    // setTimeout(() => {
-      
-    // }, 1000);
     player.request('/requests/status.json?command=pl_empty', () => { });
     player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { })
   }
@@ -80,9 +77,6 @@ console.log(video)
     play_video(video)
   } else {
     console.log('running video')
-    // setTimeout(() => {
-      
-    // }, 1000);
     player.request('/requests/status.json?command=pl_empty', () => { });
     player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { })
     player.on('statuschange', (error, status) => {
@@ -127,6 +121,7 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       break;
     case "down":
       if(!process.env.IS_PROJECTOR) {
+        console.log('volume down command received');
         if(player) player.request('/requests/status.json?command=volume&val=-10', () => { })
       }
       break;
