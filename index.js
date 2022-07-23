@@ -837,59 +837,29 @@ app.get('/api/room/:id/get_play_wall_video/ar', (req, res) => {
     }
 });
 app.get('/api/play_wall_video/:id', (req, res) => {
-    let sqlQuery = "SELECT id, name FROM `wall_media` WHERE room_id = " + req.params.id ;
+    let sqlQuery = "SELECT id, name, room_id FROM `wall_media` WHERE id = " + req.params.id ;
 
-    // return res.send(apiResponse(sqlQuery2));
-    if (process.env.APP_ENV == 'prod') {
-        let query2 = conn.query(sqlQuery2, (err, results) => {
-            if (err) {
-                return res.send(apiResponseBad(null));
-            } else {
-                var execCommands = async () => {
-                    await sendCrestCommands(results);
-                    await sendModelCommands(results);
-                };
-                execCommands();
-            }
-        });
-    }
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
             return res.send(apiResponseBad(null));
         };
-        // return res.send(apiResponse(results));
-        var p_video = '';
-        var duration = 0;
-        for (var i = 0; i < results.length; i++) {
-            if (results[i].is_projector) {
-                p_video = [
-                    encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
-                    results[i].is_image,
-                ]
-                break;
-            }
-        }
         var w_video = '';
         for (var i = 0; i < results.length; i++) {
             if (!results[i].is_projector) {
                 w_video = [
                     encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
-                    lang
+                    'lang'
                 ]
                 duration = results[i].duration
                 break;
             }
         }
-        // return res.send(apiResponse(w_video));
+        return res.send(apiResponse(w_video));
         if (req.params.id == process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
-            io.emit('change_video_wsp', p_video);
         } else {
             io.emit('change_video_dw', w_video);
-            io.emit('change_video_dp', p_video);
         }
-        // io.emit('change_video', w_video);
-        // io.emit('change_video_p', p_video);
         return res.send(apiResponse(duration));
     });
 })
