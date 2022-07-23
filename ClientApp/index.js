@@ -49,24 +49,30 @@ function getDefaultArgs()
   if (!player) {
     player = new VLC(video.toString(), getDefaultArgs());
   } else {
-    player.request('/requests/status.json?command=pl_empty', () => { });
-    player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { })
+    player.request('/requests/status.json?command=pl_empty', () => {
+      console.log('default empty list');
+      player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { });
+    });
   }
 }
 
 function play_video(video) {
   console.log(video)
   player = new VLC(video[0].toString(), getDefaultArgs());
-  player.on('statuschange', (error, status) => {
-    if (error) return console.error(error);
-    //console.log('current Time', status.time);
-    //console.log('totall Time', status.length);
-    if (status.time + 1 === status.length)
-      socket.emit('default_video', {
-        "room_id": process.env.ROOM_ID,
-        "lang": video[1]
-      })
-  });
+  if(process.env.IS_PROJECTOR == 0) {
+    player.on('statuschange', (error, status) => {
+      if (error) return console.error(error);
+      console.log('Times: ' + (status.time + 1) + '/' + status.length);
+      if (status.time + 1 == status.length)
+      {
+        console.log('time completed');
+        socket.emit('default_video', {
+          "room_id": process.env.ROOM_ID,
+          "lang": video[1]
+        })
+      }
+    });
+  }
 }
 
 function change_video(video) {
@@ -77,18 +83,24 @@ console.log(video)
     play_video(video)
   } else {
     console.log('running video')
-    player.request('/requests/status.json?command=pl_empty', () => { });
-    player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { })
-    player.on('statuschange', (error, status) => {
-      if (error) return console.error(error);
-      //console.log('current Time', status.time);
-      //console.log('totall Time', status.length);
-      if (status.time + 1 === status.length)
-        socket.emit('default_video', {
-          "room_id": process.env.ROOM_ID,
-          "lang": video[1]
-        })
+    player.request('/requests/status.json?command=pl_empty', () => {
+      console.log('change empty list');
+      player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
     });
+    if(process.env.IS_PROJECTOR == 0) {
+      player.on('statuschange', (error, status) => {
+        if (error) return console.error(error);
+        console.log('Times: ' + (status.time + 1) + '/' + status.length);
+        if (status.time + 1 == status.length)
+        {
+          console.log('time completed');
+          socket.emit('default_video', {
+            "room_id": process.env.ROOM_ID,
+            "lang": video[1]
+          })
+        }
+      });
+    }
   }
 }
 
