@@ -631,7 +631,8 @@ function sleep(ms) {
 app.post('/api/room/:id/play_scene', async (req, res) => {
     let lang = 'en';
     if (!(req.body.constructor === Object && Object.keys(req.body).length === 0)) {
-        lang = req.body.lang
+        if(req.body.lang != null && req.body.lang != '')
+            lang = req.body.lang;
     }
 
     let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
@@ -695,19 +696,18 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
 })
 
 app.post('/api/zone/:id/play_scene', (req, res) => {
-    var lang;
-    if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
-        lang = 'en';
-    } else {
-        lang = req.body.lang
+    let lang = 'en';
+    if (!(req.body.constructor === Object && Object.keys(req.body).length === 0)) {
+        if(req.body.lang != null && req.body.lang != '')
+            lang = req.body.lang;
     }
     let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image, media.room_id FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
-
+    // console.log(sqlQuery);
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
             return res.send(apiResponseBad(null));
         };
-        
+        // console.log(results);
         var p_video = '';
         var duration = 0;
         var roomid = 0;
@@ -733,7 +733,8 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
                 break;
             }
         }
-        
+        // console.log('Projector: ' + p_video);
+        // console.log('Video Wall: ' + w_video);
         if (roomid == process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
             io.emit('change_video_wsp', p_video);
