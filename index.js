@@ -837,13 +837,14 @@ app.get('/api/room/:id/get_play_wall_video/ar', (req, res) => {
     }
 });
 app.get('/api/play_wall_video/:id', (req, res) => {
-    let sqlQuery = "SELECT id, name, room_id FROM `wall_media` WHERE id = " + req.params.id ;
+    let sqlQuery = "SELECT id, name, room_id, duration FROM `wall_media` WHERE id = " + req.params.id ;
 
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
             return res.send(apiResponseBad(null));
         };
         var w_video = '';
+        var duration = 0;
         for (var i = 0; i < results.length; i++) {
             if (!results[i].is_projector) {
                 w_video = [
@@ -860,7 +861,7 @@ app.get('/api/play_wall_video/:id', (req, res) => {
         } else {
             io.emit('change_video_dw', w_video);
         }
-        return res.send(apiResponse(w_video));
+        return res.send(apiResponse(duration));
     });
 })
 
