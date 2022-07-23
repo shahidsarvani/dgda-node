@@ -450,11 +450,10 @@ app.get('/api/room/:id/video/pause', (req, res) => {
 })
 
 app.post('/api/room/:id/video/stop', (req, res) => {
-    var lang;
+    var lang = 'en';
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
-        lang = 'en';
-    } else {
-        lang = req.body.lang
+        if(req.body.lang != null && req.body.lang != '')
+            lang = req.body.lang;
     }
     
     if (req.params.id == process.env.WS_ID) {
