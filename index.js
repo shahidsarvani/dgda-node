@@ -839,6 +839,7 @@ app.get('/api/play_wall_video/:id', (req, res) => {
         };
         var w_video = '';
         var duration = 0;
+        var roomid = 0;
         for (var i = 0; i < results.length; i++) {
             if (!results[i].is_projector) {
                 w_video = [
@@ -846,11 +847,12 @@ app.get('/api/play_wall_video/:id', (req, res) => {
                     'lang'
                 ]
                 duration = results[i].duration
+                roomid = results[i].room_id;
                 break;
             }
         }
         // return res.send(apiResponse(w_video));
-        if (req.params.id == process.env.WS_ID) {
+        if (roomid == process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
         } else {
             io.emit('change_video_dw', w_video);
