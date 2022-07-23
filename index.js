@@ -854,13 +854,13 @@ app.get('/api/play_wall_video/:id', (req, res) => {
                 break;
             }
         }
-        return res.send(apiResponse(w_video));
+        // return res.send(apiResponse(w_video));
         if (req.params.id == process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
         } else {
             io.emit('change_video_dw', w_video);
         }
-        return res.send(apiResponse(duration));
+        return res.send(apiResponse(w_video));
     });
 })
 
