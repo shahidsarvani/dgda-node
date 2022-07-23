@@ -222,7 +222,7 @@ app.get('/api/rooms', (req, res) => {
 
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
-            res.send(apiResponseBad(null));
+            return res.send(apiResponseBad(null));
         };
         results.map(function (result) {
             if (process.env.APP_ENV == 'local') {
@@ -232,7 +232,7 @@ app.get('/api/rooms', (req, res) => {
             }
             // result.image_ar = /* process.env.PROD_IMG_PATH + */ result.image_ar
         })
-        res.send(apiResponse(results));
+        return res.send(apiResponse(results));
     });
 });
 
@@ -241,7 +241,7 @@ app.get('/api/rooms/ar', (req, res) => {
 
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
-            res.send(apiResponseBad(null));
+            return res.send(apiResponseBad(null));
         };
         results.map(function (result) {
             // result.image = /* process.env.PROD_IMG_PATH + */ result.image
@@ -252,7 +252,7 @@ app.get('/api/rooms/ar', (req, res) => {
                 result.image = process.env.PROD_IMG_PATH + result.image
             }
         })
-        res.send(apiResponse(results));
+        return res.send(apiResponse(results));
     });
 });
 
@@ -263,7 +263,7 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, phases) => {
             if (err) {
-                res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
                 if (process.env.APP_ENV == 'local') {
@@ -275,18 +275,18 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
                 let sqlQuery = "SELECT id, name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
-                        res.send(apiResponseBad(null));
+                        return res.send(apiResponseBad(null));
                     };
                     phases[i].zones = zones
                 })
             }
             setTimeout(() => {
-                res.send(apiResponse(phases));
+                return res.send(apiResponse(phases));
             }, 100)
         });
     } catch (error) {
         console.log(error)
-        res.send(apiResponseBad(null));
+        return res.send(apiResponseBad(null));
     }
 });
 
@@ -297,7 +297,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, phases) => {
             if (err) {
-                res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
                 if (process.env.APP_ENV == 'local') {
@@ -309,18 +309,18 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
                 let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
-                        res.send(apiResponseBad(null));
+                        return res.send(apiResponseBad(null));
                     };
                     phases[i].zones = zones
                 })
             }
             setTimeout(() => {
-                res.send(apiResponse(phases));
+                return res.send(apiResponse(phases));
             }, 100)
         });
     } catch (error) {
         console.log(error)
-        res.send(apiResponseBad(null));
+        return res.send(apiResponseBad(null));
     }
 });
 
@@ -330,7 +330,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
-                res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(null));
             }
             scenes.map(function (result) {
                 if (process.env.APP_ENV == 'local') {
@@ -340,11 +340,11 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
                 }
                 // result.image = process.env.PROD_IMG_PATH + result.image_en
             })
-            res.send(apiResponse(scenes));
+            return res.send(apiResponse(scenes));
         });
     } catch (error) {
         console.log(error)
-        res.send(apiResponseBad(null));
+        return res.send(apiResponseBad(null));
     }
 });
 
@@ -354,7 +354,7 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
-                res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(null));
             };
             scenes.map(function (result) {
                 if (process.env.APP_ENV == 'local') {
@@ -364,11 +364,11 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
                 }
                 // result.image = process.env.PROD_IMG_PATH + result.image
             })
-            res.send(apiResponse(scenes));
+            return res.send(apiResponse(scenes));
         });
     } catch (error) {
         console.log(error)
-        res.send(apiResponseBad(null));
+        return res.send(apiResponseBad(null));
     }
 });
 
@@ -378,13 +378,13 @@ app.get('/api/room/:id/zones', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
-                res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(null));
             };
-            res.send(apiResponse(scenes));
+            return res.send(apiResponse(scenes));
         });
     } catch (error) {
         console.log(error)
-        res.send(apiResponseBad(null));
+        return res.send(apiResponseBad(null));
     }
 });
 
@@ -394,13 +394,13 @@ app.get('/api/room/:id/zones/ar', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
-                res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(null));
             };
-            res.send(apiResponse(scenes));
+            return res.send(apiResponse(scenes));
         });
     } catch (error) {
         console.log(error)
-        res.send(apiResponseBad(null));
+        return res.send(apiResponseBad(null));
     }
 });
 
@@ -408,11 +408,11 @@ app.get('/api/model/up', (req, res) => {
     if (modelSocket) {
         var r = modelSocket.write('MODELUP')
         console.log("Command sent to model with status: " + r);
-        res.send(apiResponse('Model up command is sent'));
+        return res.send(apiResponse('Model up command is sent'));
     }
     else {
         console.log("Model Server not connected");
-        res.send(apiResponseBad('Model Server not connected'));
+        return res.send(apiResponseBad('Model Server not connected'));
     }
 })
 
@@ -420,11 +420,11 @@ app.get('/api/model/down', (req, res) => {
     if (modelSocket) {
         var r = modelSocket.write('MODELDOWN')
         console.log("Command sent to model with status: " + r);
-        res.send(apiResponse('Model up command is sent'));
+        return res.send(apiResponse('Model up command is sent'));
     }
     else {
         console.log("Model Server not connected");
-        res.send(apiResponseBad('Model Server not connected'));
+        return res.send(apiResponseBad('Model Server not connected'));
     }
 })
 
@@ -440,7 +440,7 @@ app.get('/api/room/:id/video/resume', (req, res) => {
     // io.emit('video', 'play');
     // io.emit('video_p', 'play');
     // });
-    res.send(apiResponse('Video play command is sent'));
+    return res.send(apiResponse('Video play command is sent'));
 })
 
 app.get('/api/room/:id/video/forward', (req, res) => {
@@ -458,7 +458,7 @@ app.get('/api/room/:id/video/forward', (req, res) => {
     io.emit('video', 'forward');
     io.emit('video_p', 'forward');
     // });
-    res.send(apiResponse('Video forward command is sent'));
+    return res.send(apiResponse('Video forward command is sent'));
 })
 
 app.get('/api/room/:id/video/back', (req, res) => {
@@ -473,7 +473,7 @@ app.get('/api/room/:id/video/back', (req, res) => {
     // io.emit('video', 'back');
     // io.emit('video_p', 'back');
     // });
-    res.send(apiResponse('Video back command is sent'));
+    return res.send(apiResponse('Video back command is sent'));
 })
 
 app.get('/api/room/:id/video/pause', (req, res) => {
@@ -493,7 +493,7 @@ app.get('/api/room/:id/video/pause', (req, res) => {
         io.emit('video_dp', 'pause');
     }
     // });
-    res.send(apiResponse('Video pause command is sent'));
+    return res.send(apiResponse('Video pause command is sent'));
 })
 
 app.post('/api/room/:id/video/stop', (req, res) => {
@@ -513,28 +513,28 @@ app.post('/api/room/:id/video/stop', (req, res) => {
     }
     // io.emit('video_stop', msg);
     // io.emit('video_p', 'stop');
-    res.send(apiResponse('Video stop command is sent'));
+    return res.send(apiResponse('Video stop command is sent'));
 })
 
 app.get('/api/volume/increase', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video_wsw', 'up');
     // });
-    res.send(apiResponse('Volume increase command is sent'));
+    return res.send(apiResponse('Volume increase command is sent'));
 })
 
 app.get('/api/volume/decrease', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video_wsw', 'down');
     // });
-    res.send(apiResponse('Volume decrease command is sent'));
+    return res.send(apiResponse('Volume decrease command is sent'));
 })
 
 app.get('/api/volume/mute', (req, res) => {
     // socket.on('video', (msg) => {
     io.emit('video_wsw', 'mute');
     // });
-    res.send(apiResponse('Volume mute command is sent'));
+    return res.send(apiResponse('Volume mute command is sent'));
 })
 
 app.get('/api/light_scene_command/:id', (req, res) => {
@@ -549,7 +549,7 @@ app.get('/api/light_scene_command/:id', (req, res) => {
                 await sendCrestCommands(results);
             };
             execCommands();
-            res.send(apiResponse('command is sent'));
+            return res.send(apiResponse('command is sent'));
         }
     });
 })
@@ -749,7 +749,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     if (process.env.APP_ENV == 'prod') {
         let query2 = conn.query(sqlQuery2, (err, results) => {
             if (err) {
-                res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(null));
             } else {
                 var execCommands = async () => {
                     await sendCrestCommands(results);
@@ -811,11 +811,11 @@ app.get('/api/room/:id/get_play_wall_video', (req, res) => {
             results.map(function (result) {
                 result.title = result.title_en
             })
-            res.send(apiResponse(results));
+            return res.send(apiResponse(results));
         });
     } catch (error) {
         console.log(error)
-        res.send(apiResponseBad(null));
+        return res.send(apiResponseBad(null));
     }
 });
 
@@ -830,70 +830,70 @@ app.get('/api/room/:id/get_play_wall_video/ar', (req, res) => {
             scenes.map(function (result) {
                 result.title = result.title_ar
             })
-            res.send(apiResponse(scenes));
+            return res.send(apiResponse(scenes));
         });
     } catch (error) {
         console.log(error)
-        res.send(apiResponseBad(null));
+        return res.send(apiResponseBad(null));
     }
 });
-// app.get('/api/room/:id/get_play_wall_video', (req, res) => {
-//     let sqlQuery = "SELECT id, title_en FROM `wall_media` WHERE room_id = " + req.params.id ;
+app.get('/api/play_wall_video/:id', (req, res) => {
+    let sqlQuery = "SELECT id, name FROM `wall_media` WHERE room_id = " + req.params.id ;
 
-//     // return res.send(apiResponse(sqlQuery2));
-//     if (process.env.APP_ENV == 'prod') {
-//         let query2 = conn.query(sqlQuery2, (err, results) => {
-//             if (err) {
-//                 res.send(apiResponseBad(null));
-//             } else {
-//                 var execCommands = async () => {
-//                     await sendCrestCommands(results);
-//                     await sendModelCommands(results);
-//                 };
-//                 execCommands();
-//             }
-//         });
-//     }
-//     let query = conn.query(sqlQuery, (err, results) => {
-//         if (err) {
-//             return res.send(apiResponseBad(null));
-//         };
-//         // return res.send(apiResponse(results));
-//         var p_video = '';
-//         var duration = 0;
-//         for (var i = 0; i < results.length; i++) {
-//             if (results[i].is_projector) {
-//                 p_video = [
-//                     encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
-//                     results[i].is_image,
-//                 ]
-//                 break;
-//             }
-//         }
-//         var w_video = '';
-//         for (var i = 0; i < results.length; i++) {
-//             if (!results[i].is_projector) {
-//                 w_video = [
-//                     encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
-//                     lang
-//                 ]
-//                 duration = results[i].duration
-//                 break;
-//             }
-//         }
-//         // return res.send(apiResponse(w_video));
-//         if (req.params.id == process.env.WS_ID) {
-//             io.emit('change_video_wsw', w_video);
-//             io.emit('change_video_wsp', p_video);
-//         } else {
-//             io.emit('change_video_dw', w_video);
-//             io.emit('change_video_dp', p_video);
-//         }
-//         // io.emit('change_video', w_video);
-//         // io.emit('change_video_p', p_video);
-//         return res.send(apiResponse(duration));
-//     });
-// })
+    // return res.send(apiResponse(sqlQuery2));
+    if (process.env.APP_ENV == 'prod') {
+        let query2 = conn.query(sqlQuery2, (err, results) => {
+            if (err) {
+                return res.send(apiResponseBad(null));
+            } else {
+                var execCommands = async () => {
+                    await sendCrestCommands(results);
+                    await sendModelCommands(results);
+                };
+                execCommands();
+            }
+        });
+    }
+    let query = conn.query(sqlQuery, (err, results) => {
+        if (err) {
+            return res.send(apiResponseBad(null));
+        };
+        // return res.send(apiResponse(results));
+        var p_video = '';
+        var duration = 0;
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].is_projector) {
+                p_video = [
+                    encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
+                    results[i].is_image,
+                ]
+                break;
+            }
+        }
+        var w_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
+                w_video = [
+                    encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
+                    lang
+                ]
+                duration = results[i].duration
+                break;
+            }
+        }
+        // return res.send(apiResponse(w_video));
+        if (req.params.id == process.env.WS_ID) {
+            io.emit('change_video_wsw', w_video);
+            io.emit('change_video_wsp', p_video);
+        } else {
+            io.emit('change_video_dw', w_video);
+            io.emit('change_video_dp', p_video);
+        }
+        // io.emit('change_video', w_video);
+        // io.emit('change_video_p', p_video);
+        return res.send(apiResponse(duration));
+    });
+})
 
 app.get('/api/test', (req, res) => {
     const child_argv = [
@@ -907,7 +907,7 @@ app.get('/api/test', (req, res) => {
         r = crestSocket.write(item);
         console.log("Command sent to crestron with status: " + r);
     });
-    res.send(apiResponseBad(null));
+    return res.send(apiResponseBad(null));
 })
 
 function apiResponse(results) {
