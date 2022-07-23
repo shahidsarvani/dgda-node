@@ -175,7 +175,6 @@ io.on('connection', (socket) => {
                 } else {
                     var execCommands = async () => {
                         await sendCrestCommands(results);
-                        await sendModelCommands(results);
                     };
                     execCommands();
                 }
@@ -443,10 +442,6 @@ app.get('/api/room/:id/video/resume', (req, res) => {
 })
 
 app.get('/api/room/:id/video/forward', (req, res) => {
-
-    // sendModelCommands2(req.params.id);
-    // sendModelCommands(req.params.id);
-    // socket.on('video', (msg) => {
     if (req.params.id == process.env.WS_ID) {
         io.emit('video_wsw', 'forward');
         io.emit('video_wsp', 'forward');
@@ -454,9 +449,8 @@ app.get('/api/room/:id/video/forward', (req, res) => {
         io.emit('video_dw', 'forward');
         io.emit('video_dp', 'forward');
     }
-    io.emit('video', 'forward');
-    io.emit('video_p', 'forward');
-    // });
+    // io.emit('video', 'forward');
+    // io.emit('video_p', 'forward');
     res.send(apiResponse('Video forward command is sent'));
 })
 
@@ -713,8 +707,8 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         if (process.env.APP_ENV === 'prod') {
             const execCommands = async () => {
                 await sendCrestCommands(results);
-                await sendModelCommands(results);
-                // await sendModelCommands(req.params.id, results, duration);
+                if (req.params.id !== process.env.WS_ID)
+                    await sendModelCommands(results);
             };
 
             await execCommands();
@@ -758,7 +752,6 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
             } else {
                 var execCommands = async () => {
                     await sendCrestCommands(results);
-                    await sendModelCommands(results);
                 };
                 execCommands();
             }
