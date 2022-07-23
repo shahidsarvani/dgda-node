@@ -122,7 +122,7 @@ io.on('connection', (socket) => {
                     event = 'change_default_video_wsw'
                     for (var i = 0; i < results.length; i++) {
                         if (!results[i].is_projector) {
-                            videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                            videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
                             break;
                         }
                     }
@@ -130,7 +130,7 @@ io.on('connection', (socket) => {
                     event = 'change_default_video_wsp'
                     for (var i = 0; i < results.length; i++) {
                         if (results[i].is_projector) {
-                            videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                            videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
                             break;
                         }
                     }
@@ -140,7 +140,7 @@ io.on('connection', (socket) => {
                     event = 'change_default_video_dw'
                     for (var i = 0; i < results.length; i++) {
                         if (!results[i].is_projector) {
-                            videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                            videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
                             break;
                         }
                     }
@@ -148,7 +148,7 @@ io.on('connection', (socket) => {
                     event = 'change_default_video_dp'
                     for (var i = 0; i < results.length; i++) {
                         if (results[i].is_projector) {
-                            videourl = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
+                            videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
                             break;
                         }
                     }
@@ -189,14 +189,14 @@ io.on('connection', (socket) => {
             var p_video = '';
             for (var i = 0; i < results.length; i++) {
                 if (results[i].is_projector) {
-                    p_video = encodeURI(process.env.PROD_VIDEO_PATH+results[i].name)
+                    p_video = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
                     break;
                 }
             }
             var w_video = '';
             for (var i = 0; i < results.length; i++) {
                 if (!results[i].is_projector) {
-                    w_video = encodeURI(process.env.PROD_VIDEO_PATH+results[i].name)
+                    w_video = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
                     break;
                 }
             }
@@ -223,12 +223,7 @@ app.get('/api/rooms', (req, res) => {
             return res.send(apiResponseBad(null));
         };
         results.map(function (result) {
-            if (process.env.APP_ENV == 'local') {
-                result.image = process.env.LOCAL_IMG_PATH + result.image
-            } else {
-                result.image = process.env.PROD_IMG_PATH + result.image
-            }
-            // result.image_ar = /* process.env.PROD_IMG_PATH + */ result.image_ar
+            result.image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + result.image
         })
         return res.send(apiResponse(results));
     });
@@ -264,12 +259,8 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
                 return res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
-                if (process.env.APP_ENV == 'local') {
-                    phases[i].image = process.env.LOCAL_IMG_PATH + phases[i].image
-                } else {
-                    phases[i].image = process.env.PROD_IMG_PATH + phases[i].image
-                }
-                // phases[i].image = process.env.PROD_IMG_PATH + phases[i].image
+                phases[i].image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + phases[i].image
+                
                 let sqlQuery = "SELECT id, name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
@@ -298,12 +289,8 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
                 return res.send(apiResponseBad(null));
             };
             for (let i = 0; i < phases.length; i++) {
-                if (process.env.APP_ENV == 'local') {
-                    phases[i].image = process.env.LOCAL_IMG_PATH + phases[i].image
-                } else {
-                    phases[i].image = process.env.PROD_IMG_PATH + phases[i].image
-                }
-                // phases[i].image = process.env.PROD_IMG_PATH + phases[i].image
+                phases[i].image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + phases[i].image
+                
                 let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
@@ -331,12 +318,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
                 return res.send(apiResponseBad(null));
             }
             scenes.map(function (result) {
-                if (process.env.APP_ENV == 'local') {
-                    result.image = process.env.LOCAL_IMG_PATH + result.image_en
-                } else {
-                    result.image = process.env.PROD_IMG_PATH + result.image_en
-                }
-                // result.image = process.env.PROD_IMG_PATH + result.image_en
+                result.image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + result.image_en
             })
             return res.send(apiResponse(scenes));
         });
@@ -355,12 +337,7 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
                 return res.send(apiResponseBad(null));
             };
             scenes.map(function (result) {
-                if (process.env.APP_ENV == 'local') {
-                    result.image = process.env.LOCAL_IMG_PATH + result.image
-                } else {
-                    result.image = process.env.PROD_IMG_PATH + result.image
-                }
-                // result.image = process.env.PROD_IMG_PATH + result.image
+                result.image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + result.image
             })
             return res.send(apiResponse(scenes));
         });
@@ -679,10 +656,9 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         for (let i = 0; i < results2.length; i++) {
             if (results2[i].is_projector) {
                 p_video = [
-                    encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name),
+                    encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results2[i].name),
                     results2[i].is_image,
                 ]
-                // p_video = encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name)
                 break;
             }
         }
@@ -690,10 +666,9 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         for (let i = 0; i < results2.length; i++) {
             if (!results2[i].is_projector) {
                 w_video = [
-                    encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name),
+                    encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results2[i].name),
                     lang
                 ]
-                // w_video = encodeURI(process.env.PROD_VIDEO_PATH + results2[i].name)
                 duration = results2[i].duration
                 break;
             }
@@ -736,22 +711,10 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     } else {
         lang = req.body.lang
     }
-    let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
-    let sqlQuery2 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
+    let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image, media.room_id FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
+    // let sqlQuery2 = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN zones ON zones.scene_id = command_scene.scene_id WHERE zones.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
 
-    // return res.send(apiResponse(sqlQuery2));
-    if (process.env.APP_ENV == 'prod') {
-        let query2 = conn.query(sqlQuery2, (err, results) => {
-            if (err) {
-                return res.send(apiResponseBad(null));
-            } else {
-                var execCommands = async () => {
-                    await sendCrestCommands(results);
-                };
-                execCommands();
-            }
-        });
-    }
+    // // return res.send(apiResponse(sqlQuery));
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
             return res.send(apiResponseBad(null));
@@ -759,12 +722,14 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         // return res.send(apiResponse(results));
         var p_video = '';
         var duration = 0;
+        var roomid = 0;
         for (var i = 0; i < results.length; i++) {
             if (results[i].is_projector) {
                 p_video = [
-                    encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
+                    encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name),
                     results[i].is_image,
                 ]
+                roomid = results[i].room_id;
                 break;
             }
         }
@@ -772,15 +737,19 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         for (var i = 0; i < results.length; i++) {
             if (!results[i].is_projector) {
                 w_video = [
-                    encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
+                    encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name),
+                    results[i].is_image,
                     lang
                 ]
                 duration = results[i].duration
+                roomid = results[i].room_id;
                 break;
             }
         }
+        console.log(w_video);
+        console.log(p_video);
         // return res.send(apiResponse(w_video));
-        if (req.params.id == process.env.WS_ID) {
+        if (roomid == process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
             io.emit('change_video_wsp', p_video);
         } else {
@@ -843,7 +812,7 @@ app.get('/api/play_wall_video/:id', (req, res) => {
         for (var i = 0; i < results.length; i++) {
             if (!results[i].is_projector) {
                 w_video = [
-                    encodeURI(process.env.PROD_VIDEO_PATH + results[i].name),
+                    encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name),
                     'lang'
                 ]
                 duration = results[i].duration
