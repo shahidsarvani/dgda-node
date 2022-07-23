@@ -1,4 +1,3 @@
-
 require('dotenv').config();
 const SERVER_HOST = process.env.SERVER_HOST;
 const SERVER_PORT = process.env.SERVER_PORT;
@@ -29,11 +28,26 @@ socket.on(process.env.CHANGE_VIDEO_EVENT, (msg) => {
   }
 })
 
+function getDefaultArgs()
+ {
+  options = process.env.VLCCOMMANDS.split(',');
+  const search = ';';
+  const replacer = new RegExp(search, 'g')
+  var args = [];
+  options.forEach((option) => {
+    args.push(option.replace(replacer, ','));
+  })
+  var defaultArguments = {
+    "arguments" : args
+  };
+  console.log(defaultArguments.arguments);
+  return defaultArguments;
+ }
 
-function default_play_video(video) {
+ function default_play_video(video) {
 	console.log('default')
   if (!player) {
-    player = new VLC(video.toString());
+    player = new VLC(video.toString(), getDefaultArgs());
   } else {
     player.request('/requests/status.json?command=pl_empty', () => { });
     player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { })
@@ -42,11 +56,11 @@ function default_play_video(video) {
 
 function play_video(video) {
   console.log(video)
-  player = new VLC(video[0].toString());
+  player = new VLC(video[0].toString(), getDefaultArgs());
   player.on('statuschange', (error, status) => {
     if (error) return console.error(error);
-    console.log('current Time', status.time);
-    console.log('totall Time', status.length);
+    //console.log('current Time', status.time);
+    //console.log('totall Time', status.length);
     if (status.time + 1 === status.length)
       socket.emit('default_video', {
         "room_id": process.env.ROOM_ID,
@@ -67,8 +81,8 @@ console.log(video)
     player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { })
     player.on('statuschange', (error, status) => {
       if (error) return console.error(error);
-      console.log('current Time', status.time);
-      console.log('totall Time', status.length);
+      //console.log('current Time', status.time);
+      //console.log('totall Time', status.length);
       if (status.time + 1 === status.length)
         socket.emit('default_video', {
           "room_id": process.env.ROOM_ID,
@@ -101,13 +115,20 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       })
       break;
     case "up":
-      if(player) player.request('/requests/status.json?command=volume&val=+10', () => { })
+      if(!process.env.IS_PROJECTOR) {
+        if(player) player.request('/requests/status.json?command=volume&val=+10', () => { })
+      }
       break;
     case "down":
-      if(player) player.request('/requests/status.json?command=volume&val=-10', () => { })
+      if(!process.env.IS_PROJECTOR) {
+        console.log('volume down command received');
+        if(player) player.request('/requests/status.json?command=volume&val=-10', () => { })
+      }
       break;
     case "mute":
-      if(player) player.request('/requests/status.json?command=volume&val=0', () => { })
+      if(!process.env.IS_PROJECTOR) {
+        if(player) player.request('/requests/status.json?command=volume&val=0', () => { })
+      }
       break;
     default:
       console.log('Error!')

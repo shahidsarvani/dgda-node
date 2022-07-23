@@ -106,8 +106,7 @@ io.on('connection', (socket) => {
     });
     let room_id = socket.handshake.query.room_id;
     let is_projector = socket.handshake.query.is_projector;
-    console.log('a user connected from room: ' + room_id);
-    console.log('a user connected fOR PROJECTOR: ' + is_projector);
+    console.log('a user connected from room: ' + room_id + ' with projector: ' + is_projector);
 
     if(room_id && is_projector) {
         let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
@@ -155,8 +154,8 @@ io.on('connection', (socket) => {
                     }
                 }
             }
-            console.log(event)
-            console.log(videourl)
+            //console.log(event)
+            //console.log(videourl)
             io.emit(event, videourl);
             console.log('command is sent')
         });
@@ -477,12 +476,12 @@ app.get('/api/room/:id/video/back', (req, res) => {
 })
 
 app.get('/api/room/:id/video/pause', (req, res) => {
-    clearInterval(videoInterval[req.params.id].modalUpInterval)
-    clearInterval(videoInterval[req.params.id].modalDownInterval)
+    // clearInterval(videoInterval[req.params.id].modalUpInterval)
+    // clearInterval(videoInterval[req.params.id].modalDownInterval)
 
-    videoInterval[req.params.id].modalUpInterval = null;
-    videoInterval[req.params.id].modalDownInterval = null;
-    videoInterval[req.params.id].lastPlayed = new Date();
+    // videoInterval[req.params.id].modalUpInterval = null;
+    // videoInterval[req.params.id].modalDownInterval = null;
+    // videoInterval[req.params.id].lastPlayed = new Date();
 
     // socket.on('video', (msg) => {
     if (req.params.id == process.env.WS_ID) {
@@ -708,7 +707,7 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         if (process.env.APP_ENV === 'prod') {
             const execCommands = async () => {
                 await sendCrestCommands(results);
-                await sendModelCommands2(req.params.id, results);
+                await sendModelCommands(results);
                 // await sendModelCommands(req.params.id, results, duration);
             };
 
