@@ -115,18 +115,20 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       })
       break;
     case "up":
-      if(!process.env.IS_PROJECTOR) {
+      console.log('volume up command received');
+      if(process.env.IS_PROJECTOR == 0) {
+        console.log('volume up command received');
         if(player) player.request('/requests/status.json?command=volume&val=+10', () => { })
       }
       break;
     case "down":
-      if(!process.env.IS_PROJECTOR) {
+      if(process.env.IS_PROJECTOR == 0) {
         console.log('volume down command received');
         if(player) player.request('/requests/status.json?command=volume&val=-10', () => { })
       }
       break;
     case "mute":
-      if(!process.env.IS_PROJECTOR) {
+      if(process.env.IS_PROJECTOR == 0) {
         if(player) player.request('/requests/status.json?command=volume&val=0', () => { })
       }
       break;
