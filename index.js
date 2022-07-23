@@ -108,7 +108,7 @@ io.on('connection', (socket) => {
     let is_projector = socket.handshake.query.is_projector;
     console.log('a user connected from room: ' + room_id + ' with projector: ' + is_projector);
 
-    if(room_id && is_projector) {
+    if (room_id && is_projector) {
         let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
@@ -118,7 +118,7 @@ io.on('connection', (socket) => {
             var event = '';
             // console.log(results)
             if (room_id == process.env.WS_ID) {
-                if(is_projector == 0) {
+                if (is_projector == 0) {
                     event = 'change_default_video_wsw'
                     for (var i = 0; i < results.length; i++) {
                         if (!results[i].is_projector) {
@@ -136,7 +136,7 @@ io.on('connection', (socket) => {
                     }
                 }
             } else {
-                if(is_projector == 0) {
+                if (is_projector == 0) {
                     event = 'change_default_video_dw'
                     for (var i = 0; i < results.length; i++) {
                         if (!results[i].is_projector) {
@@ -154,11 +154,13 @@ io.on('connection', (socket) => {
                     }
                 }
             }
-            //console.log(event)
-            //console.log(videourl)
+            console.log(event)
+            console.log(videourl)
             io.emit(event, videourl);
             console.log('command is sent')
         });
+    } else {
+        console.log('nope')
     }
 
     socket.on('default_video', (msg) => {
@@ -190,14 +192,14 @@ io.on('connection', (socket) => {
             var p_video = '';
             for (var i = 0; i < results.length; i++) {
                 if (results[i].is_projector) {
-                    p_video = encodeURI(process.env.PROD_VIDEO_PATH+results[i].name)
+                    p_video = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
                     break;
                 }
             }
             var w_video = '';
             for (var i = 0; i < results.length; i++) {
                 if (!results[i].is_projector) {
-                    w_video = encodeURI(process.env.PROD_VIDEO_PATH+results[i].name)
+                    w_video = encodeURI(process.env.PROD_VIDEO_PATH + results[i].name)
                     break;
                 }
             }
@@ -515,24 +517,36 @@ app.post('/api/room/:id/video/stop', (req, res) => {
     return res.send(apiResponse('Video stop command is sent'));
 })
 
-app.get('/api/volume/increase', (req, res) => {
-    // socket.on('video', (msg) => {
-    io.emit('video_wsw', 'up');
-    // });
+app.get('/api/room/:id/volume/increase', (req, res) => {
+    var event = '';
+    if (req.params.id == process.env.WS_ID) {
+        event = 'video_wsw';
+    } else {
+        event = 'video_dw';
+    }
+    io.emit(event, 'up');
     return res.send(apiResponse('Volume increase command is sent'));
 })
 
-app.get('/api/volume/decrease', (req, res) => {
-    // socket.on('video', (msg) => {
-    io.emit('video_wsw', 'down');
-    // });
+app.get('/api/room/:id/volume/decrease', (req, res) => {
+    var event = '';
+    if (req.params.id == process.env.WS_ID) {
+        event = 'video_wsw';
+    } else {
+        event = 'video_dw';
+    }
+    io.emit(event, 'down');
     return res.send(apiResponse('Volume decrease command is sent'));
 })
 
-app.get('/api/volume/mute', (req, res) => {
-    // socket.on('video', (msg) => {
-    io.emit('video_wsw', 'mute');
-    // });
+app.get('/api/room/:id/volume/mute', (req, res) => {
+    var event = '';
+    if (req.params.id == process.env.WS_ID) {
+        event = 'video_wsw';
+    } else {
+        event = 'video_dw';
+    }
+    io.emit(event, 'mute');
     return res.send(apiResponse('Volume mute command is sent'));
 })
 
@@ -717,13 +731,13 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         // return res.send(apiResponse(w_video));
         if (req.params.id === process.env.WS_ID) {
 
-            console.log('WALL'+w_video)
-            console.log('pROJECTOR'+p_video)
+            console.log('WALL' + w_video)
+            console.log('pROJECTOR' + p_video)
             io.emit('change_video_wsw', w_video);
             io.emit('change_video_wsp', p_video);
         } else {
-            console.log('WALL'+w_video)
-            console.log('pROJECTOR'+p_video)
+            console.log('WALL' + w_video)
+            console.log('pROJECTOR' + p_video)
             io.emit('change_video_dw', w_video);
             io.emit('change_video_dp', p_video);
         }
@@ -837,7 +851,7 @@ app.get('/api/room/:id/get_play_wall_video/ar', (req, res) => {
     }
 });
 app.get('/api/play_wall_video/:id', (req, res) => {
-    let sqlQuery = "SELECT id, name, room_id, duration FROM `wall_media` WHERE id = " + req.params.id ;
+    let sqlQuery = "SELECT id, name, room_id, duration FROM `wall_media` WHERE id = " + req.params.id;
 
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
