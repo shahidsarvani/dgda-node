@@ -46,7 +46,8 @@ function getDefaultArgs() {
 function default_play_video(video) {
   console.log('default')
   if (!player) {
-    player = new VLC(video.toString()/*, getDefaultArgs()*/);
+    player = new VLC(video.toString(), getDefaultArgs());
+    console.log(player.request('/requests/playlist.json'))
   } else {
     player.request('/requests/status.json?command=pl_empty', () => {
       console.log('default empty list');
@@ -57,7 +58,7 @@ function default_play_video(video) {
 
 function play_video(video) {
   console.log(video)
-  player = new VLC(video[0].toString()/*, getDefaultArgs()*/);
+  player = new VLC(video[0].toString(), getDefaultArgs());
   if (process.env.IS_PROJECTOR == 0) {
     player.on('statuschange', (error, status) => {
       if (error) return console.error(error);

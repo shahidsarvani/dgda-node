@@ -671,7 +671,7 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
 
     let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
     let sqlQuery2 = "SELECT media.name, media.is_projector, media.duration, media.is_image FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
-
+    // return res.send(apiResponseBad(sqlQuery2))
     try {
         const [results] = await pool.query(sqlQuery);
         const [results2] = await pool.query(sqlQuery2);
