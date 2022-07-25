@@ -106,9 +106,9 @@ io.on('connection', (socket) => {
     });
     let room_id = socket.handshake.query.room_id;
     let is_projector = socket.handshake.query.is_projector;
-    console.log('a user connected from room: ' + room_id + ' with projector: ' + is_projector);
 
     if (room_id && is_projector) {
+        console.log('a user connected from room: ' + room_id + ' with projector: ' + is_projector);
         let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
