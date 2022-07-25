@@ -47,17 +47,11 @@ function default_play_video(video) {
   console.log('default')
   if (!player) {
     player = new VLC(video.toString(), getDefaultArgs());
-    console.log('playlist')
-    setTimeout(() => {
-      console.log(player.request('/requests/playlist.json', () => { }))
-    }, 500);
   } else {
     player.request('/requests/status.json?command=pl_empty', () => {
       console.log('default empty list');
       player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { });
     });
-    console.log('playlist')
-    console.log(player.request('/requests/playlist.json', () => { }))
   }
 }
 
