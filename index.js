@@ -15,6 +15,10 @@ var crestSocket, modelSocket;
 var dateTime = require('node-datetime');
 const moment = require("moment");
 var videoInterval = {}
+var d_is_muted = 0;
+var ws_is_muted = 0;
+var ws_volume = 100;
+var d_volume = 100;
 const pool = require('promise-mysql2').createPool({
     connectionLimit: 10,
     host: 'localhost',
@@ -262,7 +266,7 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
             };
             for (let i = 0; i < phases.length; i++) {
                 phases[i].image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + phases[i].image
-                
+
                 let sqlQuery = "SELECT id, name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
@@ -292,7 +296,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
             };
             for (let i = 0; i < phases.length; i++) {
                 phases[i].image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + phases[i].image
-                
+
                 let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
@@ -452,10 +456,10 @@ app.get('/api/room/:id/video/pause', (req, res) => {
 app.post('/api/room/:id/video/stop', (req, res) => {
     var lang = 'en';
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
-        if(req.body.lang != null && req.body.lang != '')
+        if (req.body.lang != null && req.body.lang != '')
             lang = req.body.lang;
     }
-    
+
     if (req.params.id == process.env.WS_ID) {
         io.emit('video_wsw', 'stop');
         io.emit('video_wsp', 'stop');
@@ -490,13 +494,40 @@ app.get('/api/room/:id/volume/decrease', (req, res) => {
 
 app.get('/api/room/:id/volume/mute', (req, res) => {
     var event = '';
+    var args = [];
     if (req.params.id == process.env.WS_ID) {
         event = 'video_wsw';
+        if (ws_is_muted) {
+            args = [
+                'unmute',
+                ws_volume
+            ];
+            ws_is_muted = 0
+        } else {
+            args = [
+                'mute',
+                0
+            ];
+            ws_is_muted = 1
+        }
     } else {
         event = 'video_dw';
+        if (d_is_muted) {
+            args = [
+                'unmute',
+                d_volume
+            ];
+            d_is_muted = 0
+        } else {
+            args = [
+                'mute',
+                0
+            ];
+            d_is_muted = 1
+        }
     }
-    io.emit(event, 'mute');
-    return res.send(apiResponse('Volume mute command is sent'));
+    io.emit(event, args);
+    return res.send(apiResponse('Volume ' + args[0] + ' command is sent'));
 })
 
 app.get('/api/light_scene_command/:id', (req, res) => {
@@ -630,7 +661,7 @@ function sleep(ms) {
 app.post('/api/room/:id/play_scene', async (req, res) => {
     let lang = 'en';
     if (!(req.body.constructor === Object && Object.keys(req.body).length === 0)) {
-        if(req.body.lang != null && req.body.lang != '')
+        if (req.body.lang != null && req.body.lang != '')
             lang = req.body.lang;
     }
 
@@ -697,7 +728,7 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
 app.post('/api/zone/:id/play_scene', (req, res) => {
     let lang = 'en';
     if (!(req.body.constructor === Object && Object.keys(req.body).length === 0)) {
-        if(req.body.lang != null && req.body.lang != '')
+        if (req.body.lang != null && req.body.lang != '')
             lang = req.body.lang;
     }
     let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image, media.room_id FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
