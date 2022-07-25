@@ -48,7 +48,9 @@ function default_play_video(video) {
   if (!player) {
     player = new VLC(video.toString(), getDefaultArgs());
     console.log('playlist')
-    console.log(player.request('/requests/playlist.json', () => { }))
+    setTimeout(() => {
+      console.log(player.request('/requests/playlist.json', () => { }))
+    }, 500);
   } else {
     player.request('/requests/status.json?command=pl_empty', () => {
       console.log('default empty list');
