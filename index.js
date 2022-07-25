@@ -230,6 +230,9 @@ app.get('/api/rooms', (req, res) => {
         };
         results.map(function (result) {
             result.image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + result.image
+            result.image_ar = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + result.image_ar
+            result.icon = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + result.icon
+            result.icon_ar = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + result.icon_ar
         })
         return res.send(apiResponse(results));
     });
