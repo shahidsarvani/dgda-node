@@ -125,19 +125,19 @@ function change_video(video) {
     //   console.log('change empty list');
     //   player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
     // });
-    // if (process.env.IS_PROJECTOR == 0) {
-    //   player.on('statuschange', (error, status) => {
-    //     if (error) return console.error(error);
-    //     console.log('Times: ' + (status.time + 1) + '/' + status.length);
-    //     if (status.time + 1 == status.length) {
-    //       console.log('time completed');
-    //       socket.emit('default_video', {
-    //         "room_id": process.env.ROOM_ID,
-    //         "lang": video[1]
-    //       })
-    //     }
-    //   });
-    // }
+    if (process.env.IS_PROJECTOR == 0) {
+      player.on('statuschange', (error, status) => {
+        if (error) return console.error(error);
+        console.log('Times: ' + (status.time + 1) + '/' + status.length);
+        if (status.time + 1 == status.length) {
+          console.log('time completed');
+          socket.emit('default_video', {
+            "room_id": process.env.ROOM_ID,
+            "lang": video[1]
+          })
+        }
+      });
+    }
   }
 }
 
