@@ -40,15 +40,18 @@ function addItem(videoName) {
   player.request('/requests/status.json?command=pl_play&id=' + (basePlaylistID++), () => { });
 }
 
-player.on('statuschange', (error, status) => {
-  if (error) return console.error(error);
-  
-  console.log('timechange: ' + status.time + '/' + status.length);
-  if(status.information)
+if (player) {
+  player.on('statuschange', (error, status) => {
+    if (error) return console.error(error);
+
+    console.log('timechange: ' + status.time + '/' + status.length);
+    if (status.information)
       if (status.information.category.meta.filename != defaultVideo && (status.time + 1) === status.length) {
-          addItem(defaultVideo);
+        addItem(defaultVideo);
       }
-});
+  });
+
+}
 
 socket.on(process.env.CHANGE_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
@@ -110,12 +113,13 @@ function change_video(video) {
     play_video(video)
   } else {
     console.log('running video')
-    player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => {
-      console.log('video played')
-      player.request('/requests/status.json?command=command=pl_delete&id=3', () => {
-        console.log('prev video deleted')
-      });
-    });
+    addItem(encodeURI(video[0].toString()))
+    // player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => {
+    //   console.log('video played')
+    //   player.request('/requests/status.json?command=command=pl_delete&id=3', () => {
+    //     console.log('prev video deleted')
+    //   });
+    // });
 
     // player.request('/requests/status.json?command=pl_empty', () => {
     //   console.log('change empty list');
