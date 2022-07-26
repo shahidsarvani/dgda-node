@@ -28,7 +28,7 @@ function playDefaultVideo() {
 socket.on(process.env.CHANGE_DEFAULT_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
     console.log(msg)
-    defaultVideo = encodeURI(msg)
+    defaultVideo = msg
     playDefaultVideo();
     // default_play_video(msg)
   }
