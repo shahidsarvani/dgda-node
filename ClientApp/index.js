@@ -152,7 +152,7 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
   }
   switch (msg) {
     case "play":
-      addItem('sampleVideos/' + msg);
+      addItem(msg);
       // if (player) player.request('/requests/status.json?command=pl_pause', () => { })
       break;
     case "pause":
@@ -165,11 +165,12 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       if (player) player.request('/requests/status.json?command=seek&val=-10s', () => { })
       break;
     case "stop":
-      if (player) player.request('/requests/status.json?command=pl_stop', () => { })
-      socket.emit('default_video', {
-        "room_id": process.env.ROOM_ID,
-        "lang": 'en'
-      })
+      playDefaultVideo()
+      // if (player) player.request('/requests/status.json?command=pl_stop', () => { })
+      // socket.emit('default_video', {
+      //   "room_id": process.env.ROOM_ID,
+      //   "lang": 'en'
+      // })
       break;
     case "up":
       console.log('volume up command received');
