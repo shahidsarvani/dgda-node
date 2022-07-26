@@ -21,6 +21,7 @@ socket.on('connect', function (socket) {
 
 
 function playDefaultVideo() {
+  console.log(defaultVideo)
   if (!player) player = new VLC(defaultVideo);
   else addItem(defaultVideo);
 }
@@ -144,7 +145,7 @@ function change_video(video) {
 
 socket.on(process.env.VIDEO_EVENTS, (msg) => {
   console.log(msg)
-  console.log(msg[1])
+  // console.log(msg[1])
   // return;
   var volume = 0
   if (typeof msg == 'object') {
