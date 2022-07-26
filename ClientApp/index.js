@@ -29,7 +29,7 @@ socket.on(process.env.CHANGE_DEFAULT_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
     console.log(msg)
     defaultVideo = msg
-    playDefaultVideo();
+    playDefaultVideo(msg);
     // default_play_video(msg)
   }
 })
@@ -113,7 +113,8 @@ function change_video(video) {
     play_video(video)
   } else {
     console.log('running video')
-    addItem(encodeURI(video[0].toString()))
+
+    addItem(encodeURI(video[0].toString()));
     // player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => {
     //   console.log('video played')
     //   player.request('/requests/status.json?command=command=pl_delete&id=3', () => {
@@ -152,8 +153,8 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
   }
   switch (msg) {
     case "play":
-      addItem(encodeURI(msg));
-      // if (player) player.request('/requests/status.json?command=pl_pause', () => { })
+      // addItem('sampleVideos/' + msg);
+      if (player) player.request('/requests/status.json?command=pl_pause', () => { })
       break;
     case "pause":
       if (player) player.request('/requests/status.json?command=pl_pause', () => { })
@@ -165,12 +166,11 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       if (player) player.request('/requests/status.json?command=seek&val=-10s', () => { })
       break;
     case "stop":
-      playDefaultVideo()
-      // if (player) player.request('/requests/status.json?command=pl_stop', () => { })
-      // socket.emit('default_video', {
-      //   "room_id": process.env.ROOM_ID,
-      //   "lang": 'en'
-      // })
+      if (player) player.request('/requests/status.json?command=pl_stop', () => { })
+      socket.emit('default_video', {
+        "room_id": process.env.ROOM_ID,
+        "lang": 'en'
+      })
       break;
     case "up":
       console.log('volume up command received');
