@@ -4,7 +4,10 @@ const SERVER_PORT = process.env.SERVER_PORT;
 const url = `http://${SERVER_HOST}:${SERVER_PORT}`
 var VLC = require('vlc-simple-player')
 const { io } = require("socket.io-client");
+
 let player;
+var basePlaylistID = 3;
+var defaultVideo = '';
 
 const socket = io(url, {
   query: {
@@ -15,12 +18,38 @@ const socket = io(url, {
 socket.on('connect', function (socket) {
   console.log('Connected!');
 })
+
+
+function playDefaultVideo() {
+  if (!player) player = new VLC(defaultVideo);
+  else addItem(defaultVideo);
+}
+
 socket.on(process.env.CHANGE_DEFAULT_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
     console.log(msg)
-    default_play_video(msg)
+    defaultVideo = msg
+    playDefaultVideo(msg);
+    // default_play_video(msg)
   }
 })
+
+function addItem(videoName) {
+  player.request('/requests/status.json?command=in_enqueue&input=' + videoName, () => { });
+  player.request('/requests/status.json?command=pl_delete&id=' + basePlaylistID, () => { });
+  player.request('/requests/status.json?command=pl_play&id=' + (basePlaylistID++), () => { });
+}
+
+player.on('statuschange', (error, status) => {
+  if (error) return console.error(error);
+  
+  console.log('timechange: ' + status.time + '/' + status.length);
+  if(status.information)
+      if (status.information.category.meta.filename != defaultVideo && (status.time + 1) === status.length) {
+          addItem(defaultVideo);
+      }
+});
+
 socket.on(process.env.CHANGE_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
     console.log(msg)
@@ -81,13 +110,13 @@ function change_video(video) {
     play_video(video)
   } else {
     console.log('running video')
-    player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { 
+    player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => {
       console.log('video played')
-      player.request('/requests/status.json?command=command=pl_delete&id=3', () => { 
+      player.request('/requests/status.json?command=command=pl_delete&id=3', () => {
         console.log('prev video deleted')
       });
     });
-    
+
     // player.request('/requests/status.json?command=pl_empty', () => {
     //   console.log('change empty list');
     //   player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
@@ -119,7 +148,8 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
   }
   switch (msg) {
     case "play":
-      if (player) player.request('/requests/status.json?command=pl_pause', () => { })
+      addItem('sampleVideos/' + msg);
+      // if (player) player.request('/requests/status.json?command=pl_pause', () => { })
       break;
     case "pause":
       if (player) player.request('/requests/status.json?command=pl_pause', () => { })
