@@ -152,7 +152,7 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
   }
   switch (msg) {
     case "play":
-      addItem(msg);
+      addItem(encodeURI(msg));
       // if (player) player.request('/requests/status.json?command=pl_pause', () => { })
       break;
     case "pause":
