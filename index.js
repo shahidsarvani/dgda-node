@@ -19,6 +19,7 @@ var d_is_muted = 0;
 var ws_is_muted = 0;
 var ws_volume = 100;
 var d_volume = 100;
+var dt;
 const pool = require('promise-mysql2').createPool({
     connectionLimit: 10,
     host: 'localhost',
@@ -58,7 +59,7 @@ const conn = mysql.createConnection({
 
 conn.connect((err) => {
     if (err) throw err;
-    console.log('Mysql Connected with App...');
+    LogToConsole('Mysql Connected with App...');
 });
 
 
@@ -90,14 +91,14 @@ conn.connect((err) => {
 // }
 
 crestServer.on("connection", (socket) => {
-    console.log("Crestron connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    LogToConsole("Crestron connection details - " + socket.remoteAddress + ":" + socket.remotePort);
     crestSocket = socket;
     socket.setKeepAlive(true); // to keep the status connected
     crestSocket.setKeepAlive(true); // to keep the status connected
 });
 
 modelServer.on("connection", (socket) => {
-    console.log("Model connection details - ", socket.remoteAddress + ":" + socket.remotePort);
+    LogToConsole("Model connection details - " + socket.remoteAddress + ":" + socket.remotePort);
     modelSocket = socket;
     socket.setKeepAlive(true); // to keep the status connected
     modelSocket.setKeepAlive(true); // to keep the status connected
@@ -106,21 +107,21 @@ modelServer.on("connection", (socket) => {
 
 io.on('connection', (socket) => {
     socket.on('disconnect', () => {
-        console.log('user disconnected');
+        LogToConsole('user disconnected');
     });
     let room_id = socket.handshake.query.room_id;
     let is_projector = socket.handshake.query.is_projector;
 
     if (room_id && is_projector) {
-        console.log('a user connected from room: ' + room_id + ' with projector: ' + is_projector);
+        LogToConsole('a user connected from room: ' + room_id + ' with projector: ' + is_projector);
         let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
-                console.log(err)
+                LogToConsole(JSON.stringify(err))
             };
             var videourl = '';
             var event = '';
-            // console.log(results)
+            // LogToConsole(JSON.stringify(results))
             if (room_id == process.env.WS_ID) {
                 if (is_projector == 0) {
                     event = 'change_default_video_wsw'
@@ -158,26 +159,26 @@ io.on('connection', (socket) => {
                     }
                 }
             }
-            console.log(event)
-            console.log(videourl)
+            LogToConsole(event)
+            LogToConsole(videourl)
             io.emit(event, videourl);
-            console.log('command is sent')
+            LogToConsole('command is sent')
         });
     } else {
-        console.log('nope')
+        LogToConsole('nope')
     }
 
     socket.on('default_video', (msg) => {
-        console.log(msg)
-        console.log('show ended')
+        LogToConsole(JSON.stringify(msg));
+        LogToConsole('show ended')
         let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = " + msg.room_id + " AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
         let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg.room_id + " AND scenes.is_default = 1 AND media.lang = '" + msg.lang + "' ORDER BY media.id DESC";
-        // console.log(sqlQuery2);
+        // LogToConsole(sqlQuery2);
         // return;
         if (process.env.APP_ENV == 'prod') {
             let query = conn.query(sqlQuery, (err, results) => {
                 if (err) {
-                    console.log(err)
+                    LogToConsole(JSON.stringify(err))
                 } else {
                     var execCommands = async () => {
                         await sendCrestCommands(results);
@@ -188,9 +189,9 @@ io.on('connection', (socket) => {
         }
         let query2 = conn.query(sqlQuery2, (err, results) => {
             if (err) {
-                console.log(err)
+                LogToConsole(JSON.stringify(err))
             };
-            // console.log(apiResponse(results))
+            // LogToConsole(JSON.stringify(apiResponse(results)))
             // return;
             var p_video = '';
             for (var i = 0; i < results.length; i++) {
@@ -216,7 +217,7 @@ io.on('connection', (socket) => {
             }
             // io.emit('change_default_video', w_video);
             // io.emit('change_default_video_p', p_video);
-            console.log('command is sent')
+            LogToConsole('command is sent')
         });
     })
 });
@@ -227,7 +228,7 @@ app.get('/api/rooms', (req, res) => {
     // return res.send(sqlQuery);
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
-            return res.send(apiResponseBad(null));
+            return res.send(apiResponseBad(err));
         };
         results.map(function (result) {
             result.image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + result.image
@@ -244,7 +245,7 @@ app.get('/api/rooms/ar', (req, res) => {
 
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
-            return res.send(apiResponseBad(null));
+            return res.send(apiResponseBad(err));
         };
         results.map(function (result) {
             // result.image = /* process.env.PROD_IMG_PATH + */ result.image
@@ -266,7 +267,7 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, phases) => {
             if (err) {
-                return res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(err));
             };
             for (let i = 0; i < phases.length; i++) {
                 phases[i].image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + phases[i].image
@@ -274,7 +275,7 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
                 let sqlQuery = "SELECT id, name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
-                        return res.send(apiResponseBad(null));
+                        return res.send(apiResponseBad(err));
                     };
                     phases[i].zones = zones
                 })
@@ -284,8 +285,8 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
             }, 100)
         });
     } catch (error) {
-        console.log(error)
-        return res.send(apiResponseBad(null));
+        LogToConsole(JSON.stringify(error))
+        return res.send(apiResponseBad(error));
     }
 });
 
@@ -296,7 +297,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, phases) => {
             if (err) {
-                return res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(err));
             };
             for (let i = 0; i < phases.length; i++) {
                 phases[i].image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + phases[i].image
@@ -304,7 +305,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
                 let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
-                        return res.send(apiResponseBad(null));
+                        return res.send(apiResponseBad(err));
                     };
                     phases[i].zones = zones
                 })
@@ -314,8 +315,8 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
             }, 100)
         });
     } catch (error) {
-        console.log(error)
-        return res.send(apiResponseBad(null));
+        LogToConsole(JSON.stringify(error))
+        return res.send(apiResponseBad(error));
     }
 });
 
@@ -325,7 +326,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
-                return res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(err));
             }
             scenes.map(function (result) {
                 result.image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + result.image_en
@@ -333,8 +334,8 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
             return res.send(apiResponse(scenes));
         });
     } catch (error) {
-        console.log(error)
-        return res.send(apiResponseBad(null));
+        LogToConsole(JSON.stringify(error))
+        return res.send(apiResponseBad(error));
     }
 });
 
@@ -344,7 +345,7 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
-                return res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(err));
             };
             scenes.map(function (result) {
                 result.image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + result.image
@@ -352,8 +353,8 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
             return res.send(apiResponse(scenes));
         });
     } catch (error) {
-        console.log(error)
-        return res.send(apiResponseBad(null));
+        LogToConsole(JSON.stringify(error))
+        return res.send(apiResponseBad(error));
     }
 });
 
@@ -363,13 +364,13 @@ app.get('/api/room/:id/zones', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
-                return res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(err));
             };
             return res.send(apiResponse(scenes));
         });
     } catch (error) {
-        console.log(error)
-        return res.send(apiResponseBad(null));
+        LogToConsole(JSON.stringify(error))
+        return res.send(apiResponseBad(error));
     }
 });
 
@@ -379,24 +380,24 @@ app.get('/api/room/:id/zones/ar', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
-                return res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(err));
             };
             return res.send(apiResponse(scenes));
         });
     } catch (error) {
-        console.log(error)
-        return res.send(apiResponseBad(null));
+        LogToConsole(JSON.stringify(error))
+        return res.send(apiResponseBad(error));
     }
 });
 
 app.get('/api/model/up', (req, res) => {
     if (modelSocket) {
         var r = modelSocket.write('MODELUP')
-        console.log("Command sent to model with status: " + r);
+        LogToConsole("Command sent to model with status: " + r);
         return res.send(apiResponse('Model up command is sent'));
     }
     else {
-        console.log("Model Server not connected");
+        LogToConsole("Model Server not connected");
         return res.send(apiResponseBad('Model Server not connected'));
     }
 })
@@ -404,11 +405,11 @@ app.get('/api/model/up', (req, res) => {
 app.get('/api/model/down', (req, res) => {
     if (modelSocket) {
         var r = modelSocket.write('MODELDOWN')
-        console.log("Command sent to model with status: " + r);
+        LogToConsole("Command sent to model with status: " + r);
         return res.send(apiResponse('Model up command is sent'));
     }
     else {
-        console.log("Model Server not connected");
+        LogToConsole("Model Server not connected");
         return res.send(apiResponseBad('Model Server not connected'));
     }
 })
@@ -540,7 +541,7 @@ app.get('/api/light_scene_command/:id', (req, res) => {
     // res.send(apiResponse(sqlQuery));
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
-            return res.send(apiResponseBad(null));
+            return res.send(apiResponseBad(err));
         } else {
             var execCommands = async () => {
                 await sendCrestCommands(results);
@@ -560,15 +561,13 @@ function sendCrestCommands(results) {
     crestCommands = crestCommands.filter(function (element) {
         return element !== undefined;
     });
-    console.log(crestCommands);
+    LogToConsole(JSON.stringify(crestCommands));
 
-    var r, dt;
+    var r;
     crestCommands.forEach(function (item, index) {
         setTimeout(function () {
-            dt = dateTime.create();
             if (crestSocket) r = crestSocket.write(item);
-            var formatted = dt.format('Y-m-d H:M:S:N');
-            console.log(formatted + ": Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
+            LogToConsole("Command sent to crestron with status: " + r + ", Delay: " + results[index].delay);
         }, index * results[index].delay)
     });
 }
@@ -581,16 +580,14 @@ function sendModelCommands(results) {
     modelCommands = modelCommands.filter(function (element) {
         return element !== undefined;
     });
-    console.log(modelCommands);
-    var r, dt;
+    LogToConsole(JSON.stringify(modelCommands));
+    var r;
     modelCommands.forEach(async function (item, index) {
         if (item == process.env.MODEL_UP) await sleep(results[index].model_up_delay * 1000);
         if (item == process.env.MODEL_DOWN) await sleep(results[index].model_down_delay * 1000);
         setTimeout(function () {
-            dt = dateTime.create();
             if (modelSocket) r = modelSocket.write(item);
-            var formatted = dt.format('Y-m-d H:M:S:N');
-            console.log(formatted + ": " + item + " sent to model with status: " + r + ", Delay: " + results[index].delay);
+            LogToConsole(item + " sent to model with status: " + r + ", Delay: " + results[index].delay);
         }, index * results[index].delay)
     });
 }
@@ -618,7 +615,7 @@ function sendModelCommands2(id, results, duration) {
             return element !== undefined;
         });
 
-        let r, dt;
+        let r;
         modelCommands.forEach(async function (item, index) {
             if (item === process.env.MODEL_UP) videoInterval[id].modalUpDelay = results[index].model_up_delay;
             if (item === process.env.MODEL_DOWN) videoInterval[id].modalDownDelay = results[index].model_down_delay;
@@ -630,28 +627,24 @@ function sendModelCommands2(id, results, duration) {
     const remainingModalUpDuration = videoInterval[id].modalUpDelay - playedDuration;
     if (remainingModalUpDuration > 0 && !videoInterval[id].isModalUpExecuted) {
         videoInterval[id].modalUpInterval = setTimeout(function () {
-            const dt = dateTime.create();
             let r;
             if (modelSocket) r = modelSocket.write(process.env.MODEL_UP);
-            else console.log('Model Up')
-            const formatted = dt.format('Y-m-d H:M:S:N');
+            else LogToConsole('Model Up');
             videoInterval[id].isModalUpExecuted = true
             // clearInterval(videoInterval[req.params.id].modalUpInterval)
-            console.log(formatted + ": " + process.env.MODEL_UP + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalUpDelay);
+            LogToConsole(process.env.MODEL_UP + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalUpDelay);
         }, remainingModalUpDuration * 1000)
     }
 
     const remainingModalDownDuration = videoInterval[id].modalDownDelay - playedDuration;
     if (remainingModalDownDuration > 0 && !videoInterval[id].isModalDownExecuted) {
         videoInterval[id].modalDownInterval = setTimeout(function () {
-            const dt = dateTime.create();
             let r;
             if (modelSocket) r = modelSocket.write(process.env.MODEL_DOWN);
-            else console.log('Model Down')
-            const formatted = dt.format('Y-m-d H:M:S:N');
+            else LogToConsole('Model Down');
             videoInterval[id].isModalDownExecuted = true
             // clearInterval(videoInterval[req.params.id].modalDownInterval)
-            console.log(formatted + ": " + process.env.MODEL_DOWN + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalDownDelay);
+            LogToConsole(process.env.MODEL_DOWN + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalDownDelay);
         }, remainingModalDownDuration * 1000)
     }
 }
@@ -713,13 +706,13 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
 
         if (req.params.id === process.env.WS_ID) {
 
-            console.log('WALL' + w_video)
-            console.log('pROJECTOR' + p_video)
+            LogToConsole('WALL: ' + JSON.stringify(w_video))
+            LogToConsole('PROJECTOR: ' + JSON.stringify(p_video))
             io.emit('change_video_wsw', w_video);
             io.emit('change_video_wsp', p_video);
         } else {
-            console.log('WALL' + w_video)
-            console.log('pROJECTOR' + p_video)
+            LogToConsole('WALL: ' + JSON.stringify(w_video))
+            LogToConsole('PROJECTOR: ' + JSON.stringify(p_video))
             io.emit('change_video_dw', w_video);
             io.emit('change_video_dp', p_video);
         }
@@ -736,12 +729,12 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
             lang = req.body.lang;
     }
     let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image, media.room_id FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
-    // console.log(sqlQuery);
+    // LogToConsole(sqlQuery);
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
-            return res.send(apiResponseBad(null));
+            return res.send(apiResponseBad(err));
         };
-        // console.log(results);
+        // LogToConsole(JSON.stringify(results));
         var p_video = '';
         var duration = 0;
         var roomid = 0;
@@ -767,8 +760,8 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
                 break;
             }
         }
-        // console.log('Projector: ' + p_video);
-        // console.log('Video Wall: ' + w_video);
+        // LogToConsole('Projector: ' + JSON.stringify(p_video));
+        // LogToConsole('Video Wall: ' + JSON.stringify(w_video));
         if (roomid == process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
             io.emit('change_video_wsp', p_video);
@@ -780,6 +773,59 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     });
 })
 
+function playDefaultScene(roomId, lang)
+{
+    let _roomId = 0;
+    let _lang = 'en';
+    let _wsp_video = '', _wsw_video = '',  _dp_video = '', _dw_video = '';
+    if(roomId) _roomId = roomId;
+    if(lang) _lang = lang;
+    let sqlQuery = "SELECT m.name, m.room_id, m.is_projector, m.is_image, m.duration FROM media AS m INNER JOIN scenes AS s ON m.scene_id = s.id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 AND m.lang = 'en' ORDER BY m.id DESC;";
+    let query = conn.query(sqlQuery, (err, results) => {
+        if (err) {
+            throw new Error(err);
+        };
+        for (var i = 0; i < results.length; i++) {
+            if(results[i].room_id == process.env.WS_ID) {
+                if (results[i].is_projector && _wsp_video == '')
+                    _wsp_video = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
+                else if (_wsw_video == '')
+                    _wsw_video = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
+            }
+            else {
+                if (results[i].is_projector && _dp_video == '')
+                    _dp_video = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
+                else if (_dw_video == '')
+                    _dw_video = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
+            }
+        }
+        if(_roomId == 0) {
+            io.emit('change_default_video_wsw', _wsw_video);
+            io.emit('change_default_video_wsp', _wsp_video);
+            io.emit('change_default_video_dw', _dw_video);
+            io.emit('change_default_video_dp', _dp_video);
+            return true;
+        }
+        else if (_roomId == process.env.WS_ID) {
+            io.emit('change_default_video_wsw', _wsw_video);
+            io.emit('change_default_video_wsp', _wsp_video);
+            return true;
+        }
+        else {
+            io.emit('change_default_video_dw', _dw_video);
+            io.emit('change_default_video_dp', _dp_video);
+            return true;
+        }
+    });
+}
+
+function LogToConsole(msg)
+{
+    var dt = dateTime.create();
+    var formatted = dt.format('Y-m-d H:M:S:N');
+    console.log(formatted + ": " + msg);
+}
+
 app.post('/api/play_default', (req, res) => {
     let lang = 'en';
     let roomId = 0;
@@ -789,109 +835,118 @@ app.post('/api/play_default', (req, res) => {
         if (req.body.roomId != null && req.body.roomId != '')
             roomId = req.body.roomId;
     }
-    if (!roomId) {
-        let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image, media.room_id FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + req.params.id + " AND scenes.is_default = 1 AND media.lang = " + lang + " ORDER BY media.id DESC";
-        // console.log(sqlQuery);
-        let query = conn.query(sqlQuery, (err, results) => {
-            if (err) {
-                return res.send(apiResponseBad(null));
-            };
-            // console.log(results);
-            var p_video = '';
-            var duration = 0;
-            var roomid = roomId;
-            for (var i = 0; i < results.length; i++) {
-                if (results[i].is_projector) {
-                    p_video = [
-                        encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name),
-                        lang
-                    ]
-                    roomid = results[i].room_id;
-                    break;
-                }
-            }
-            var w_video = '';
-            for (var i = 0; i < results.length; i++) {
-                if (!results[i].is_projector) {
-                    w_video = [
-                        encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name),
-                        lang
-                    ]
-                    duration = results[i].duration
-                    roomid = results[i].room_id;
-                    break;
-                }
-            }
-            // console.log('Projector: ' + p_video);
-            // console.log('Video Wall: ' + w_video);
-            if (roomid == process.env.WS_ID) {
-                io.emit('change_video_wsw', w_video);
-                io.emit('change_video_wsp', p_video);
-            } else {
-                io.emit('change_video_dw', w_video);
-                io.emit('change_video_dp', p_video);
-            }
-            return res.send(apiResponse(duration));
-        });
-    } else {
-        let room_id = [1, 2];
-        let is_projector = [0, 1];
-        for(let i = 1; i < 3; i++) {
-            for (let j = 0; j < 2; j++) {
-                console.log('a user connected from room: ' + i + ' with projector: ' + j);
-                let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + i + " AND scenes.is_default = 1 AND media.is_projector = " + j + " ORDER BY media.id DESC";
-                let query = conn.query(sqlQuery, (err, results) => {
-                    if (err) {
-                        console.log(err)
-                    };
-                    var videourl = '';
-                    var event = '';
-                    // console.log(results)
-                    if (room_id == process.env.WS_ID) {
-                        if (is_projector == 0) {
-                            event = 'change_default_video_wsw'
-                            for (var i = 0; i < results.length; i++) {
-                                if (!results[i].is_projector) {
-                                    videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
-                                    break;
-                                }
-                            }
-                        } else {
-                            event = 'change_default_video_wsp'
-                            for (var i = 0; i < results.length; i++) {
-                                if (results[i].is_projector) {
-                                    videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
-                                    break;
-                                }
-                            }
-                        }
-                    } else {
-                        if (is_projector == 0) {
-                            event = 'change_default_video_dw'
-                            for (var i = 0; i < results.length; i++) {
-                                if (!results[i].is_projector) {
-                                    videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
-                                    break;
-                                }
-                            }
-                        } else {
-                            event = 'change_default_video_dp'
-                            for (var i = 0; i < results.length; i++) {
-                                if (results[i].is_projector) {
-                                    videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    console.log(event)
-                    console.log(videourl)
-                    io.emit(event, videourl);
-                    console.log('command is sent')
-                });
-            }
+    try {
+        if (playDefaultScene(roomId, lang)) {
+            LogToConsole('default scene command sent successfully');
+            return res.send(apiResponse('Default Scene command sent successfully'));
         }
     }
+    catch(err) {
+        return res.send(apiResponseBad(err));
+    }
+    // if (!roomId) {
+    //     let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image, media.room_id FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + req.params.id + " AND scenes.is_default = 1 AND media.lang = " + lang + " ORDER BY media.id DESC";
+    //     // LogToConsole(sqlQuery);
+    //     let query = conn.query(sqlQuery, (err, results) => {
+    //         if (err) {
+    //             return res.send(apiResponseBad(err));
+    //         };
+    //         // LogToConsole(JSON.stringify(results));
+    //         var p_video = '';
+    //         var duration = 0;
+    //         var roomid = roomId;
+    //         for (var i = 0; i < results.length; i++) {
+    //             if (results[i].is_projector) {
+    //                 p_video = [
+    //                     encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name),
+    //                     lang
+    //                 ]
+    //                 roomid = results[i].room_id;
+    //                 break;
+    //             }
+    //         }
+    //         var w_video = '';
+    //         for (var i = 0; i < results.length; i++) {
+    //             if (!results[i].is_projector) {
+    //                 w_video = [
+    //                     encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name),
+    //                     lang
+    //                 ]
+    //                 duration = results[i].duration
+    //                 roomid = results[i].room_id;
+    //                 break;
+    //             }
+    //         }
+    //         // LogToConsole('Projector: ' + JSON.stringify(p_video));
+    //         // LogToConsole('Video Wall: ' + JSON.stringify(w_video));
+    //         if (roomid == process.env.WS_ID) {
+    //             io.emit('change_video_wsw', w_video);
+    //             io.emit('change_video_wsp', p_video);
+    //         } else {
+    //             io.emit('change_video_dw', w_video);
+    //             io.emit('change_video_dp', p_video);
+    //         }
+    //         return res.send(apiResponse(duration));
+    //     });
+    // } else {
+    //     let room_id = [1, 2];
+    //     let is_projector = [0, 1];
+    //     for(let i = 1; i < 3; i++) {
+    //         for (let j = 0; j < 2; j++) {
+    //             LogToConsole('a user connected from room: ' + i + ' with projector: ' + j);
+    //             let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + i + " AND scenes.is_default = 1 AND media.is_projector = " + j + " ORDER BY media.id DESC";
+    //             let query = conn.query(sqlQuery, (err, results) => {
+    //                 if (err) {
+    //                     LogToConsole(JSON.stringify(err))
+    //                 };
+    //                 var videourl = '';
+    //                 var event = '';
+    //                 // LogToConsole(JSON.stringify(results))
+    //                 if (room_id == process.env.WS_ID) {
+    //                     if (is_projector == 0) {
+    //                         event = 'change_default_video_wsw'
+    //                         for (var i = 0; i < results.length; i++) {
+    //                             if (!results[i].is_projector) {
+    //                                 videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
+    //                                 break;
+    //                             }
+    //                         }
+    //                     } else {
+    //                         event = 'change_default_video_wsp'
+    //                         for (var i = 0; i < results.length; i++) {
+    //                             if (results[i].is_projector) {
+    //                                 videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
+    //                                 break;
+    //                             }
+    //                         }
+    //                     }
+    //                 } else {
+    //                     if (is_projector == 0) {
+    //                         event = 'change_default_video_dw'
+    //                         for (var i = 0; i < results.length; i++) {
+    //                             if (!results[i].is_projector) {
+    //                                 videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
+    //                                 break;
+    //                             }
+    //                         }
+    //                     } else {
+    //                         event = 'change_default_video_dp'
+    //                         for (var i = 0; i < results.length; i++) {
+    //                             if (results[i].is_projector) {
+    //                                 videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
+    //                                 break;
+    //                             }
+    //                         }
+    //                     }
+    //                 }
+    //                 LogToConsole(event)
+    //                 LogToConsole(videourl)
+    //                 io.emit(event, videourl);
+    //                 LogToConsole('command is sent')
+    //             });
+    //         }
+    //     }
+    // }
 })
 
 app.get('/api/room/:id/get_play_wall_video', (req, res) => {
@@ -900,7 +955,7 @@ app.get('/api/room/:id/get_play_wall_video', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
-                return res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(err));
             }
             results.map(function (result) {
                 result.title = result.title_en
@@ -908,8 +963,8 @@ app.get('/api/room/:id/get_play_wall_video', (req, res) => {
             return res.send(apiResponse(results));
         });
     } catch (error) {
-        console.log(error)
-        return res.send(apiResponseBad(null));
+        LogToConsole(JSON.stringify(error))
+        return res.send(apiResponseBad(error));
     }
 });
 
@@ -919,7 +974,7 @@ app.get('/api/room/:id/get_play_wall_video/ar', (req, res) => {
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
-                return res.send(apiResponseBad(null));
+                return res.send(apiResponseBad(err));
             };
             scenes.map(function (result) {
                 result.title = result.title_ar
@@ -927,8 +982,8 @@ app.get('/api/room/:id/get_play_wall_video/ar', (req, res) => {
             return res.send(apiResponse(scenes));
         });
     } catch (error) {
-        console.log(error)
-        return res.send(apiResponseBad(null));
+        LogToConsole(JSON.stringify(error))
+        return res.send(apiResponseBad(error));
     }
 });
 
@@ -937,7 +992,7 @@ app.get('/api/play_wall_video/:id', (req, res) => {
 
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
-            return res.send(apiResponseBad(null));
+            return res.send(apiResponseBad(err));
         };
         var w_video = '';
         var duration = 0;
@@ -973,7 +1028,7 @@ app.get('/api/test', (req, res) => {
     var r;
     child_argv.forEach(function (item) {
         r = crestSocket.write(item);
-        console.log("Command sent to crestron with status: " + r);
+        LogToConsole("Command sent to crestron with status: " + r);
     });
     return res.send(apiResponseBad(null));
 })
@@ -989,13 +1044,13 @@ function apiResponseBad(results) {
 }
 
 server.listen(process.env.APP_PORT, () => {
-    console.log('App Server started on port  %j', server.address().port);
+    LogToConsole('App Server started on port  %j' + server.address().port);
 });
 
 crestServer.listen(process.env.CREST_PORT, () => {
-    console.log('Crestron Server started on port %j', crestServer.address().port);
+    LogToConsole('Crestron Server started on port %j' + crestServer.address().port);
 });
 
 modelServer.listen(process.env.MODEL_PORT, () => {
-    console.log('Model server started on port %j', modelServer.address().port);
+    LogToConsole('Model server started on port %j' + modelServer.address().port);
 });

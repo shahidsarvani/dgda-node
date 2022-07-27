@@ -4,10 +4,7 @@ const SERVER_PORT = process.env.SERVER_PORT;
 const url = `http://${SERVER_HOST}:${SERVER_PORT}`
 var VLC = require('vlc-simple-player')
 const { io } = require("socket.io-client");
-
 let player;
-var basePlaylistID = 3;
-var defaultVideo = '';
 
 const socket = io(url, {
   query: {
@@ -18,42 +15,12 @@ const socket = io(url, {
 socket.on('connect', function (socket) {
   console.log('Connected!');
 })
-
-
-function playDefaultVideo() {
-  console.log(defaultVideo)
-  if (!player) player = new VLC(defaultVideo);
-  else addItem(defaultVideo);
-}
-
 socket.on(process.env.CHANGE_DEFAULT_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
     console.log(msg)
-    defaultVideo = msg
-    playDefaultVideo();
-    // default_play_video(msg)
+    default_play_video(msg)
   }
 })
-
-function addItem(videoName) {
-  player.request('/requests/status.json?command=in_enqueue&input=' + videoName, () => { });
-  player.request('/requests/status.json?command=pl_delete&id=' + basePlaylistID, () => { });
-  player.request('/requests/status.json?command=pl_play&id=' + (basePlaylistID++), () => { });
-}
-
-if (player) {
-  player.on('statuschange', (error, status) => {
-    if (error) return console.error(error);
-
-    console.log('timechange: ' + status.time + '/' + status.length);
-    if (status.information)
-      if (status.information.category.meta.filename != defaultVideo && (status.time + 1) === status.length) {
-        addItem(defaultVideo);
-      }
-  });
-
-}
-
 socket.on(process.env.CHANGE_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
     console.log(msg)
@@ -95,7 +62,16 @@ function play_video(video) {
     player.on('statuschange', (error, status) => {
       if (error) return console.error(error);
       console.log('Times: ' + (status.time + 1) + '/' + status.length);
-      if (status.time + 1 == status.length) {
+      if (process.env.ROOM_ID == process.env.WS_ID) {
+        if (status.time == status.length - 1) {
+          console.log('time completed');
+          socket.emit('default_video', {
+            "room_id": process.env.ROOM_ID,
+            "lang": video[1]
+          })
+        }
+      }
+      else if (status.time + 1 == status.length) {
         console.log('time completed');
         socket.emit('default_video', {
           "room_id": process.env.ROOM_ID,
@@ -114,24 +90,31 @@ function change_video(video) {
     play_video(video)
   } else {
     console.log('running video')
-
-    addItem(encodeURI(video[0].toString()));
-    // player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => {
+    // player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { 
     //   console.log('video played')
-    //   player.request('/requests/status.json?command=command=pl_delete&id=3', () => {
+    //   player.request('/requests/status.json?command=command=pl_delete&id=0', () => { 
     //     console.log('prev video deleted')
     //   });
     // });
-
-    // player.request('/requests/status.json?command=pl_empty', () => {
-    //   console.log('change empty list');
-    //   player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
-    // });
+    
+    player.request('/requests/status.json?command=pl_empty', () => {
+      console.log('change empty list');
+      player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
+    });
     if (process.env.IS_PROJECTOR == 0) {
       player.on('statuschange', (error, status) => {
         if (error) return console.error(error);
         console.log('Times: ' + (status.time + 1) + '/' + status.length);
-        if (status.time + 1 == status.length) {
+        if (process.env.ROOM_ID == process.env.WS_ID) {
+          if (status.time == status.length - 1) {
+            console.log('time completed');
+            socket.emit('default_video', {
+              "room_id": process.env.ROOM_ID,
+              "lang": video[1]
+            })
+          }
+        }
+        else if (status.time + 1 == status.length) {
           console.log('time completed');
           socket.emit('default_video', {
             "room_id": process.env.ROOM_ID,
@@ -145,7 +128,7 @@ function change_video(video) {
 
 socket.on(process.env.VIDEO_EVENTS, (msg) => {
   console.log(msg)
-  // console.log(msg[1])
+  console.log(msg[1])
   // return;
   var volume = 0
   if (typeof msg == 'object') {
@@ -154,7 +137,6 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
   }
   switch (msg) {
     case "play":
-      // addItem('sampleVideos/' + msg);
       if (player) player.request('/requests/status.json?command=pl_pause', () => { })
       break;
     case "pause":
@@ -167,12 +149,11 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       if (player) player.request('/requests/status.json?command=seek&val=-10s', () => { })
       break;
     case "stop":
-      playDefaultVideo();
-      // if (player) player.request('/requests/status.json?command=pl_stop', () => { })
-      // socket.emit('default_video', {
-      //   "room_id": process.env.ROOM_ID,
-      //   "lang": 'en'
-      // })
+      if (player) player.request('/requests/status.json?command=pl_stop', () => { })
+      socket.emit('default_video', {
+        "room_id": process.env.ROOM_ID,
+        "lang": 'en'
+      })
       break;
     case "up":
       console.log('volume up command received');
