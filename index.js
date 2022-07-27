@@ -780,6 +780,58 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     });
 })
 
+app.post('/api/room/:id/play_default', (req, res) => {
+    let lang = 'en';
+    if (!(req.body.constructor === Object && Object.keys(req.body).length === 0)) {
+        if (req.body.lang != null && req.body.lang != '')
+            lang = req.body.lang;
+    }
+    // let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image, media.room_id FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
+    let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image, media.room_id FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + req.params.id + " AND scenes.is_default = 1 AND media.lang = " + lang + " ORDER BY media.id DESC";
+    // console.log(sqlQuery);
+    let query = conn.query(sqlQuery, (err, results) => {
+        if (err) {
+            return res.send(apiResponseBad(null));
+        };
+        // console.log(results);
+        var p_video = '';
+        var duration = 0;
+        var roomid = 0;
+        for (var i = 0; i < results.length; i++) {
+            if (results[i].is_projector) {
+                p_video = [
+                    encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name),
+                    lang
+                ]
+                roomid = results[i].room_id;
+                break;
+            }
+        }
+        var w_video = '';
+        for (var i = 0; i < results.length; i++) {
+            if (!results[i].is_projector) {
+                w_video = [
+                    encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name),
+                    lang
+                ]
+                duration = results[i].duration
+                roomid = results[i].room_id;
+                break;
+            }
+        }
+        // console.log('Projector: ' + p_video);
+        // console.log('Video Wall: ' + w_video);
+        if (roomid == process.env.WS_ID) {
+            io.emit('change_video_wsw', w_video);
+            io.emit('change_video_wsp', p_video);
+        } else {
+            io.emit('change_video_dw', w_video);
+            io.emit('change_video_dp', p_video);
+        }
+        return res.send(apiResponse(duration));
+    });
+})
+
 app.get('/api/room/:id/get_play_wall_video', (req, res) => {
     try {
         let sqlQuery = "SELECT id, title_en FROM `wall_media` WHERE room_id = " + req.params.id;
