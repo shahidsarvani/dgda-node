@@ -17,8 +17,8 @@ const moment = require("moment");
 var videoInterval = {}
 var d_is_muted = 0;
 var ws_is_muted = 0;
-var ws_volume = 100;
-var d_volume = 100;
+// var ws_volume = 100;
+// var d_volume = 100;
 var dt;
 const pool = require('promise-mysql2').createPool({
     connectionLimit: 10,
@@ -525,31 +525,19 @@ app.get('/api/room/:id/volume/mute', (req, res) => {
     if (req.params.id == process.env.WS_ID) {
         event = 'video_wsw';
         if (ws_is_muted) {
-            args = [
-                'unmute',
-                ws_volume
-            ];
+            args = 'unmute'
             ws_is_muted = 0
         } else {
-            args = [
-                'mute',
-                0
-            ];
+            args = 'mute'
             ws_is_muted = 1
         }
     } else {
         event = 'video_dw';
         if (d_is_muted) {
-            args = [
-                'unmute',
-                d_volume
-            ];
+            args = 'unmute'
             d_is_muted = 0
         } else {
-            args = [
-                'mute',
-                0
-            ];
+            args = 'mute'
             d_is_muted = 1
         }
     }
