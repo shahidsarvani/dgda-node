@@ -414,7 +414,14 @@ app.get('/api/model/down', (req, res) => {
     }
 })
 
-app.get('/api/room/:id/video/resume', (req, res) => {
+app.get('/api/room/:id/video/resume', async (req, res) => {
+    const execCommands = async () => {
+        if (req.params.id !== process.env.WS_ID)
+            // await sendModelCommands(results);
+            await sendModelCommands2(req.params.id, []);
+    };
+
+    await execCommands();
     if (req.params.id == process.env.WS_ID) {
         io.emit('video_wsw', 'play');
         io.emit('video_wsp', 'play');
@@ -448,6 +455,16 @@ app.get('/api/room/:id/video/back', (req, res) => {
 })
 
 app.get('/api/room/:id/video/pause', (req, res) => {
+    if (req.params.id !== process.env.WS_ID) {
+        clearInterval(videoInterval[req.params.id].modalUpInterval)
+        clearInterval(videoInterval[req.params.id].modalDownInterval)
+
+        videoInterval[req.params.id].modalUpInterval = null;
+        videoInterval[req.params.id].modalDownInterval = null;
+        videoInterval[req.params.id].lastPlayed = new Date();
+        console.log(videoInterval)
+    }
+
     if (req.params.id == process.env.WS_ID) {
         io.emit('video_wsw', 'pause');
         io.emit('video_wsp', 'pause');
@@ -459,6 +476,11 @@ app.get('/api/room/:id/video/pause', (req, res) => {
 })
 
 app.post('/api/room/:id/video/stop', (req, res) => {
+    if (req.params.id !== process.env.WS_ID) {
+        clearInterval(videoInterval[req.params.id].modalUpInterval)
+        clearInterval(videoInterval[req.params.id].modalDownInterval)
+        videoInterval = {}
+    }
     var lang = 'en';
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
         if (req.body.lang != null && req.body.lang != '')
@@ -592,19 +614,21 @@ function sendModelCommands(results) {
     });
 }
 
-function sendModelCommands2(id, results, duration) {
+function sendModelCommands2(id, results) {
     if (!videoInterval[id]) {
+        console.log('videoInterval')
         videoInterval[id] = {
             modalUpInterval: null,
             modalDownInterval: null,
-            duration,
+            // duration,
             isModalUpExecuted: false,
             isModalDownExecuted: false,
             modalUpDelay: 0,
             modalDownDelay: 0,
-            lastPlayed: new Date()
+            lastPlayed: new Date(),
         }
     }
+
 
     if (results?.length) {
         let modelCommands = results.map((result) => {
@@ -622,9 +646,14 @@ function sendModelCommands2(id, results, duration) {
         });
     }
 
-    const playedDuration = moment().subtract(moment(videoInterval[id].lastPlayed));
+    console.log(videoInterval)
 
-    const remainingModalUpDuration = videoInterval[id].modalUpDelay - playedDuration;
+    // console.log(videoInterval[id].lastPlayed)
+    var playedDuration = moment().subtract(moment(videoInterval[id].lastPlayed));
+    // console.log(playedDuration)
+
+    var remainingModalUpDuration = videoInterval[id].modalUpDelay - playedDuration;
+    console.log(remainingModalUpDuration)
     if (remainingModalUpDuration > 0 && !videoInterval[id].isModalUpExecuted) {
         videoInterval[id].modalUpInterval = setTimeout(function () {
             let r;
@@ -636,7 +665,7 @@ function sendModelCommands2(id, results, duration) {
         }, remainingModalUpDuration * 1000)
     }
 
-    const remainingModalDownDuration = videoInterval[id].modalDownDelay - playedDuration;
+    var remainingModalDownDuration = videoInterval[id].modalDownDelay - playedDuration;
     if (remainingModalDownDuration > 0 && !videoInterval[id].isModalDownExecuted) {
         videoInterval[id].modalDownInterval = setTimeout(function () {
             let r;
@@ -698,7 +727,8 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
             const execCommands = async () => {
                 await sendCrestCommands(results);
                 if (req.params.id !== process.env.WS_ID)
-                    await sendModelCommands(results);
+                    // await sendModelCommands(results);
+                    await sendModelCommands2(req.params.id, results);
             };
 
             await execCommands();
@@ -773,20 +803,20 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     });
 })
 
-function playDefaultScene(roomId, lang)
-{
-    let _roomId = 0;
-    let _lang = 'en';
-    let _wsp_video = '', _wsw_video = '',  _dp_video = '', _dw_video = '';
-    if(roomId) _roomId = roomId;
-    if(lang) _lang = lang;
+function playDefaultScene(roomId, lang) {
+    var _roomId = 0;
+    var _lang = 'en';
+    let _wsp_video = '', _wsw_video = '', _dp_video = '', _dw_video = '';
+    if (roomId) _roomId = roomId;
+    if (lang) _lang = lang;
+
     let sqlQuery = "SELECT m.name, m.room_id, m.is_projector, m.is_image, m.duration FROM media AS m INNER JOIN scenes AS s ON m.scene_id = s.id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 AND m.lang = 'en' ORDER BY m.id DESC;";
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
             throw new Error(err);
         };
         for (var i = 0; i < results.length; i++) {
-            if(results[i].room_id == process.env.WS_ID) {
+            if (results[i].room_id == process.env.WS_ID) {
                 if (results[i].is_projector && _wsp_video == '')
                     _wsp_video = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
                 else if (_wsw_video == '')
@@ -799,7 +829,8 @@ function playDefaultScene(roomId, lang)
                     _dw_video = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
             }
         }
-        if(_roomId == 0) {
+        // return _roomId;
+        if (_roomId == 0) {
             io.emit('change_default_video_wsw', _wsw_video);
             io.emit('change_default_video_wsp', _wsp_video);
             io.emit('change_default_video_dw', _dw_video);
@@ -819,8 +850,7 @@ function playDefaultScene(roomId, lang)
     });
 }
 
-function LogToConsole(msg)
-{
+function LogToConsole(msg) {
     var dt = dateTime.create();
     var formatted = dt.format('Y-m-d H:M:S:N');
     console.log(formatted + ": " + msg);
@@ -840,8 +870,7 @@ app.post('/api/play_default', (req, res) => {
             LogToConsole('default scene command sent successfully');
             return res.send(apiResponse('Default Scene command sent successfully'));
         }
-    }
-    catch(err) {
+    } catch (err) {
         return res.send(apiResponseBad(err));
     }
     // if (!roomId) {
