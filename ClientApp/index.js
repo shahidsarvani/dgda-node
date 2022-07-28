@@ -59,7 +59,9 @@ function default_play_video(video) {
   if (process.env.IS_PROJECTOR == 0) {
     player.on('statuschange', (error, status) => {
       // console.log(status)
-      volume = status.volume
+      if(status) {
+        volume = status.volume
+      }
     });
   }
 }
@@ -169,11 +171,14 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       break;
     case "mute":
       if (process.env.IS_PROJECTOR == 0) {
-        if (is_muted == 0) {
+        console.log(is_muted)
+        if (is_muted == 1) {
           volume = prev_volume
+          is_muted = 0
         } else {
           prev_volume = volume
           volume = 0
+          is_muted = 1
         }
         console.log(prev_volume)
         console.log(volume)
