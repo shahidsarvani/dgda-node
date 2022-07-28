@@ -45,50 +45,10 @@ const conn = mysql.createConnection({
     database: 'dgda' /* MySQL Database */
 });
 
-// const pool = mysql2.createPool({
-//     connectionLimit: 10,
-//     host: 'localhost',
-//     user: 'root', /* MySQL User */
-//     password: '', /* MySQL Password */
-//     database: 'dgda' /* MySQL Database */
-//     // host: '18.170.155.197',
-//     // user: 'admin_dgda_cms_user', /* MySQL User */
-//     // password: '3S~9f7a7b', /* MySQL Password */
-//     // database: 'admin_dgda_cms_db' /* MySQL Database */
-// });
-
 conn.connect((err) => {
     if (err) throw err;
     LogToConsole('Mysql Connected with App...');
 });
-
-
-// app.get('/', (req, res) => {
-//     res.sendFile(__dirname + '/pages/index.html');
-// });
-
-// app.get('/d_w_video', (req, res) => {
-//     res.sendFile(__dirname + '/pages/d_w_video.html');
-// });
-// app.get('/ws_w_video_vlc', (req, res) => {
-//     res.sendFile(__dirname + '/pages/ws_w_video_vlc.html');
-// });
-
-// app.get('/d_p_video', (req, res) => {
-//     res.sendFile(__dirname + '/pages/d_p_video.html');
-// });
-// app.get('/ws_w_video', (req, res) => {
-//     res.sendFile(__dirname + '/pages/ws_w_video.html');
-// });
-
-// app.get('/ws_p_video', (req, res) => {
-//     res.sendFile(__dirname + '/pages/ws_p_video.html');
-// });
-
-// function setSocketDefault(socket) {
-//     socket.setKeepAlive(true); // to keep the status connected
-//     socket.setEncoding('utf8'); // to keep the communication textual
-// }
 
 crestServer.on("connection", (socket) => {
     LogToConsole("Crestron connection details - " + socket.remoteAddress + ":" + socket.remotePort);
@@ -1036,7 +996,7 @@ app.get('/api/play_wall_video/:id', (req, res) => {
                 break;
             }
         }
-        // return res.send(apiResponse(w_video));
+        // return res.send(apiResponse(roomid));
         if (roomid == process.env.WS_ID) {
             io.emit('change_video_wsw', w_video);
         } else {
