@@ -73,16 +73,7 @@ function play_video(video) {
       volume = status.volume
       if (error) return console.error(error);
       console.log('Times: ' + (status.time + 1) + '/' + status.length);
-      if (process.env.ROOM_ID == process.env.WS_ID) {
-        if (status.time == status.length - 1) {
-          console.log('time completed');
-          socket.emit('default_video', {
-            "room_id": process.env.ROOM_ID,
-            "lang": video[1]
-          })
-        }
-      }
-      else if (status.time + 1 == status.length) {
+      if (status.time == status.length - 1) {
         console.log('time completed');
         socket.emit('default_video', {
           "room_id": process.env.ROOM_ID,
@@ -118,16 +109,7 @@ function change_video(video) {
         volume = status.volume
         if (error) return console.error(error);
         console.log('Times: ' + (status.time + 1) + '/' + status.length);
-        if (process.env.ROOM_ID == process.env.WS_ID) {
-          if (status.time == status.length - 1) {
-            console.log('time completed');
-            socket.emit('default_video', {
-              "room_id": process.env.ROOM_ID,
-              "lang": video[1]
-            })
-          }
-        }
-        else if (status.time + 1 == status.length) {
+        if (status.time == status.length - 1) {
           console.log('time completed');
           socket.emit('default_video', {
             "room_id": process.env.ROOM_ID,

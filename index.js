@@ -462,7 +462,7 @@ app.get('/api/room/:id/video/pause', (req, res) => {
         videoInterval[req.params.id].modalUpInterval = null;
         videoInterval[req.params.id].modalDownInterval = null;
         videoInterval[req.params.id].lastPlayed = new Date();
-        console.log(videoInterval)
+        LogToConsole(JSON.stringify(videoInterval))
     }
 
     if (req.params.id == process.env.WS_ID) {
@@ -600,7 +600,7 @@ function sendModelCommands(results) {
 
 function sendModelCommands2(id, results) {
     if (!videoInterval[id]) {
-        console.log('videoInterval')
+        LogToConsole('videoInterval')
         videoInterval[id] = {
             modalUpInterval: null,
             modalDownInterval: null,
@@ -630,14 +630,15 @@ function sendModelCommands2(id, results) {
         });
     }
 
-    console.log(videoInterval)
+    LogToConsole(JSON.stringify(videoInterval))
 
-    // console.log(videoInterval[id].lastPlayed)
+
+    // LogToConsole(videoInterval[id].lastPlayed)
     var playedDuration = moment().subtract(moment(videoInterval[id].lastPlayed));
-    // console.log(playedDuration)
+    // LogToConsole(playedDuration)
 
     var remainingModalUpDuration = videoInterval[id].modalUpDelay - playedDuration;
-    console.log(remainingModalUpDuration)
+    LogToConsole(remainingModalUpDuration)
     if (remainingModalUpDuration > 0 && !videoInterval[id].isModalUpExecuted) {
         videoInterval[id].modalUpInterval = setTimeout(function () {
             let r;
@@ -793,6 +794,20 @@ function playDefaultScene(roomId, lang) {
     let _wsp_video = '', _wsw_video = '', _dp_video = '', _dw_video = '';
     if (roomId) _roomId = roomId;
     if (lang) _lang = lang;
+    
+    if (process.env.APP_ENV == 'prod') {
+        let cmdQuery = "SELECT c.name, (SELECT delay FROM settings WHERE id = 1) AS delay, h.device FROM `commands` AS c INNER JOIN hardware AS h ON h.id = c.hardware_id INNER JOIN command_scene AS cs ON cs.command_id = c.id INNER JOIN scenes AS s ON s.id = cs.scene_id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 ORDER BY cs.sort_order ASC;";
+        let query = conn.query(cmdQuery, (err, results) => {
+            if (err) {
+                LogToConsole(JSON.stringify(err))
+            } else {
+                var execCommands = async () => {
+                    await sendCrestCommands(results);
+                };
+                execCommands();
+            }
+        });
+    }
 
     let sqlQuery = "SELECT m.name, m.room_id, m.is_projector, m.is_image, m.duration FROM media AS m INNER JOIN scenes AS s ON m.scene_id = s.id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 AND m.lang = 'en' ORDER BY m.id DESC;";
     let query = conn.query(sqlQuery, (err, results) => {
