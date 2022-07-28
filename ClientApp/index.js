@@ -7,6 +7,7 @@ const { io } = require("socket.io-client");
 let player;
 let volume = 0;
 let prev_volume = 0;
+let is_muted = 0;
 
 const socket = io(url, {
   query: {
@@ -186,21 +187,25 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       break;
     case "mute":
       if (process.env.IS_PROJECTOR == 0) {
-        prev_volume = volume
-        volume = 0
+        if (is_muted == 0) {
+          volume = prev_volume
+        } else {
+          prev_volume = volume
+          volume = 0
+        }
         console.log(prev_volume)
         console.log(volume)
         if (player) player.request('/requests/status.json?command=volume&val=' + volume, () => { })
       }
       break;
-    case "unmute":
-      if (process.env.IS_PROJECTOR == 0) {
-        volume = prev_volume
-        console.log(prev_volume)
-        console.log(volume)
-        if (player) player.request('/requests/status.json?command=volume&val=' + prev_volume, () => { })
-      }
-      break;
+    // case "unmute":
+    //   if (process.env.IS_PROJECTOR == 0) {
+    //     volume = prev_volume
+    //     console.log(prev_volume)
+    //     console.log(volume)
+    //     if (player) player.request('/requests/status.json?command=volume&val=' + volume, () => { })
+    //   }
+    //   break;
     default:
       console.log('Error!')
       break;

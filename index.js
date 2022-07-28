@@ -15,8 +15,8 @@ var crestSocket, modelSocket;
 var dateTime = require('node-datetime');
 const moment = require("moment");
 var videoInterval = {}
-var d_is_muted = 0;
-var ws_is_muted = 0;
+// var d_is_muted = 0;
+// var ws_is_muted = 0;
 // var ws_volume = 100;
 // var d_volume = 100;
 var dt;
@@ -521,28 +521,24 @@ app.get('/api/room/:id/volume/decrease', (req, res) => {
 
 app.get('/api/room/:id/volume/mute', (req, res) => {
     var event = '';
-    var args = [];
+    var args = 'mute';
     if (req.params.id == process.env.WS_ID) {
         event = 'video_wsw';
-        if (ws_is_muted) {
-            args = 'unmute'
-            ws_is_muted = 0
-        } else {
-            args = 'mute'
-            ws_is_muted = 1
-        }
+        // if (ws_is_muted) {
+        //     args = 'unmute'
+        // } else {
+        //     args = 'mute'
+        // }
     } else {
         event = 'video_dw';
-        if (d_is_muted) {
-            args = 'unmute'
-            d_is_muted = 0
-        } else {
-            args = 'mute'
-            d_is_muted = 1
-        }
+        // if (d_is_muted) {
+        //     args = 'unmute'
+        // } else {
+        //     args = 'mute'
+        // }
     }
     io.emit(event, args);
-    return res.send(apiResponse('Volume ' + args[0] + ' command is sent'));
+    return res.send(apiResponse('Volume mute command is sent'));
 })
 
 app.get('/api/light_scene_command/:id', (req, res) => {
