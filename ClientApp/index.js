@@ -5,6 +5,7 @@ const url = `http://${SERVER_HOST}:${SERVER_PORT}`
 var VLC = require('vlc-simple-player')
 const { io } = require("socket.io-client");
 let player;
+let volume = 0;
 
 const socket = io(url, {
   query: {
@@ -60,6 +61,8 @@ function play_video(video) {
   player = new VLC(video[0].toString(), getDefaultArgs());
   if (process.env.IS_PROJECTOR == 0) {
     player.on('statuschange', (error, status) => {
+      console.log(status)
+      // volume = status.
       if (error) return console.error(error);
       console.log('Times: ' + (status.time + 1) + '/' + status.length);
       if (process.env.ROOM_ID == process.env.WS_ID) {
@@ -96,13 +99,14 @@ function change_video(video) {
     //     console.log('prev video deleted')
     //   });
     // });
-    
+
     player.request('/requests/status.json?command=pl_empty', () => {
       console.log('change empty list');
       player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
     });
     if (process.env.IS_PROJECTOR == 0) {
       player.on('statuschange', (error, status) => {
+        console.log(status)
         if (error) return console.error(error);
         console.log('Times: ' + (status.time + 1) + '/' + status.length);
         if (process.env.ROOM_ID == process.env.WS_ID) {
@@ -128,13 +132,13 @@ function change_video(video) {
 
 socket.on(process.env.VIDEO_EVENTS, (msg) => {
   console.log(msg)
-  console.log(msg[1])
-  // return;
-  var volume = 0
-  if (typeof msg == 'object') {
-    volume = msg[1]
-    msg = msg[0]
-  }
+  // console.log(msg[1])
+  // // return;
+  // var volume = 0
+  // if (typeof msg == 'object') {
+  //   volume = msg[1]
+  //   msg = msg[0]
+  // }
   switch (msg) {
     case "play":
       if (player) player.request('/requests/status.json?command=pl_pause', () => { })
@@ -159,25 +163,25 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       console.log('volume up command received');
       if (process.env.IS_PROJECTOR == 0) {
         console.log('volume up command received');
-        if (player) player.request('/requests/status.json?command=volume&val=+10', () => { })
+        console.log(volume)
+        if (player) player.request('/requests/status.json?command=volume&val=' + volume + '%', () => { })
       }
       break;
     case "down":
       if (process.env.IS_PROJECTOR == 0) {
         console.log('volume down command received');
-        if (player) player.request('/requests/status.json?command=volume&val=-10', () => { })
+        console.log(volume)
+        if (player) player.request('/requests/status.json?command=volume&val=' + volume + '%', () => { })
       }
       break;
     case "mute":
       if (process.env.IS_PROJECTOR == 0) {
-        console.log(msg)
         console.log(volume)
-        if (player) player.request('/requests/status.json?command=volume&val=' + volume, () => { })
+        if (player) player.request('/requests/status.json?command=volume&val=' + volume + '%', () => { })
       }
       break;
     case "unmute":
       if (process.env.IS_PROJECTOR == 0) {
-        console.log(msg)
         console.log(volume)
         if (player) player.request('/requests/status.json?command=volume&val=' + volume, () => { })
       }
