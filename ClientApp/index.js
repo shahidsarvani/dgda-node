@@ -6,6 +6,7 @@ var VLC = require('vlc-simple-player')
 const { io } = require("socket.io-client");
 let player;
 let volume = 0;
+let prev_volume = 0;
 
 const socket = io(url, {
   query: {
@@ -54,6 +55,12 @@ function default_play_video(video) {
       player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { });
     });
   }
+  if (process.env.IS_PROJECTOR == 0) {
+    player.on('statuschange', (error, status) => {
+      // console.log(status)
+      volume = status.volume
+    });
+  }
 }
 
 function play_video(video) {
@@ -61,8 +68,8 @@ function play_video(video) {
   player = new VLC(video[0].toString(), getDefaultArgs());
   if (process.env.IS_PROJECTOR == 0) {
     player.on('statuschange', (error, status) => {
-      console.log(status)
-      // volume = status.
+      // console.log(status)
+      volume = status.volume
       if (error) return console.error(error);
       console.log('Times: ' + (status.time + 1) + '/' + status.length);
       if (process.env.ROOM_ID == process.env.WS_ID) {
@@ -106,7 +113,8 @@ function change_video(video) {
     });
     if (process.env.IS_PROJECTOR == 0) {
       player.on('statuschange', (error, status) => {
-        console.log(status)
+        // console.log(status)
+        volume = status.volume
         if (error) return console.error(error);
         console.log('Times: ' + (status.time + 1) + '/' + status.length);
         if (process.env.ROOM_ID == process.env.WS_ID) {
@@ -163,27 +171,34 @@ socket.on(process.env.VIDEO_EVENTS, (msg) => {
       console.log('volume up command received');
       if (process.env.IS_PROJECTOR == 0) {
         console.log('volume up command received');
+        volume += 20
         console.log(volume)
-        if (player) player.request('/requests/status.json?command=volume&val=' + volume + '%', () => { })
+        if (player) player.request('/requests/status.json?command=volume&val=' + volume, () => { })
       }
       break;
     case "down":
       if (process.env.IS_PROJECTOR == 0) {
         console.log('volume down command received');
+        volume -= 20
         console.log(volume)
-        if (player) player.request('/requests/status.json?command=volume&val=' + volume + '%', () => { })
+        if (player) player.request('/requests/status.json?command=volume&val=' + volume, () => { })
       }
       break;
     case "mute":
       if (process.env.IS_PROJECTOR == 0) {
+        prev_volume = volume
+        volume = 0
+        console.log(prev_volume)
         console.log(volume)
-        if (player) player.request('/requests/status.json?command=volume&val=' + volume + '%', () => { })
+        if (player) player.request('/requests/status.json?command=volume&val=' + volume, () => { })
       }
       break;
     case "unmute":
       if (process.env.IS_PROJECTOR == 0) {
+        volume = prev_volume
+        console.log(prev_volume)
         console.log(volume)
-        if (player) player.request('/requests/status.json?command=volume&val=' + volume, () => { })
+        if (player) player.request('/requests/status.json?command=volume&val=' + prev_volume, () => { })
       }
       break;
     default:
