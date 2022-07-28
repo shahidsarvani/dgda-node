@@ -110,6 +110,7 @@ function change_video(video) {
         // console.log(status)
         volume = status.volume
         if (error) return console.error(error);
+        console.log('meow')
         console.log('Times: ' + (status.time + 1) + '/' + status.length);
         if (status.time == status.length - 1) {
           console.log('time completed');
