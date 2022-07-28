@@ -989,7 +989,7 @@ app.get('/api/play_wall_video/:id', (req, res) => {
             if (!results[i].is_projector) {
                 w_video = [
                     encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name),
-                    'lang'
+                    'en'
                 ]
                 duration = results[i].duration
                 roomid = results[i].room_id;
