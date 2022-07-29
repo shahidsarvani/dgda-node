@@ -15,6 +15,8 @@ var crestSocket, modelSocket;
 var dateTime = require('node-datetime');
 const moment = require("moment");
 var videoInterval = {}
+var timeInterval = 0;
+var videoPlayed = 0;
 // var d_is_muted = 0;
 // var ws_is_muted = 0;
 // var ws_volume = 100;
@@ -375,17 +377,22 @@ app.get('/api/model/down', (req, res) => {
 })
 
 app.get('/api/room/:id/video/resume', async (req, res) => {
-    const execCommands = async () => {
-        if (req.params.id !== process.env.WS_ID)
-            // await sendModelCommands(results);
-            await sendModelCommands2(req.params.id, []);
-    };
-
-    await execCommands();
     if (req.params.id == process.env.WS_ID) {
         io.emit('video_wsw', 'play');
         io.emit('video_wsp', 'play');
     } else {
+        timeInterval = setInterval(() => {
+            videoPlayed++
+        }, 1000)
+        const execCommands = async () => {
+            if (req.params.id !== process.env.WS_ID) {
+                // await sendModelCommands(results);
+                // videoInterval[req.params.id].lastPlayed = new Date();
+                LogToConsole(JSON.stringify(videoInterval))
+                await sendModelCommands2(req.params.id, []);
+            }
+        };
+        await execCommands();
         io.emit('video_dw', 'play');
         io.emit('video_dp', 'play');
     }
@@ -418,6 +425,7 @@ app.get('/api/room/:id/video/pause', (req, res) => {
     if (req.params.id !== process.env.WS_ID) {
         clearInterval(videoInterval[req.params.id].modalUpInterval)
         clearInterval(videoInterval[req.params.id].modalDownInterval)
+        clearInterval(timeInterval)
 
         videoInterval[req.params.id].modalUpInterval = null;
         videoInterval[req.params.id].modalDownInterval = null;
@@ -439,6 +447,8 @@ app.post('/api/room/:id/video/stop', (req, res) => {
     if (req.params.id !== process.env.WS_ID) {
         clearInterval(videoInterval[req.params.id].modalUpInterval)
         clearInterval(videoInterval[req.params.id].modalDownInterval)
+        clearInterval(timeInterval)
+        videoPlayed = 0;
         videoInterval = {}
     }
     var lang = 'en';
@@ -559,6 +569,9 @@ function sendModelCommands(results) {
 }
 
 function sendModelCommands2(id, results) {
+    timeInterval = setInterval(() => {
+        videoPlayed++;
+    }, 1000);
     if (!videoInterval[id]) {
         LogToConsole('videoInterval')
         videoInterval[id] = {
@@ -597,7 +610,7 @@ function sendModelCommands2(id, results) {
     var playedDuration = moment().subtract(moment(videoInterval[id].lastPlayed));
     // LogToConsole(playedDuration)
 
-    var remainingModalUpDuration = videoInterval[id].modalUpDelay - playedDuration;
+    var remainingModalUpDuration = videoInterval[id].modalUpDelay - videoPlayed;
     LogToConsole(remainingModalUpDuration)
     if (remainingModalUpDuration > 0 && !videoInterval[id].isModalUpExecuted) {
         videoInterval[id].modalUpInterval = setTimeout(function () {
@@ -610,7 +623,7 @@ function sendModelCommands2(id, results) {
         }, remainingModalUpDuration * 1000)
     }
 
-    var remainingModalDownDuration = videoInterval[id].modalDownDelay - playedDuration;
+    var remainingModalDownDuration = videoInterval[id].modalDownDelay - videoPlayed;
     if (remainingModalDownDuration > 0 && !videoInterval[id].isModalDownExecuted) {
         videoInterval[id].modalDownInterval = setTimeout(function () {
             let r;
@@ -754,7 +767,7 @@ function playDefaultScene(roomId, lang) {
     let _wsp_video = '', _wsw_video = '', _dp_video = '', _dw_video = '';
     if (roomId) _roomId = roomId;
     if (lang) _lang = lang;
-    
+
     if (process.env.APP_ENV == 'prod') {
         let cmdQuery = "SELECT c.name, (SELECT delay FROM settings WHERE id = 1) AS delay, h.device FROM `commands` AS c INNER JOIN hardware AS h ON h.id = c.hardware_id INNER JOIN command_scene AS cs ON cs.command_id = c.id INNER JOIN scenes AS s ON s.id = cs.scene_id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 ORDER BY cs.sort_order ASC;";
         let query = conn.query(cmdQuery, (err, results) => {
