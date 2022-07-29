@@ -8,7 +8,7 @@ let player;
 let volume = 0;
 let prev_volume = 0;
 let is_muted = 0;
-let do_empty = 1;
+// let do_empty = 1;
 
 const socket = io(url, {
   query: {
@@ -96,7 +96,7 @@ function play_video(video) {
 function change_video(video) {
   console.log('change video')
   console.log(video)
-  do_empty = 1
+  // do_empty = 1
   if (!player) {
     console.log('new video')
     play_video(video)
@@ -146,16 +146,17 @@ function change_zone_video(video) {
     //     console.log('prev video deleted')
     //   });
     // });
-    if(do_empty) {
+    // if(do_empty) {
       player.request('/requests/status.json?command=pl_empty', () => {
         console.log('change empty list');
         player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
       });
-      do_empty = 0
-    } else {
-      console.log('enqueue video');
-      player.request('/requests/status.json?command=in_enqueue&input=' + encodeURI(video[0].toString()), () => { });
-    }
+      // do_empty = 0
+    // }
+    //  else {
+    //   console.log('enqueue video');
+    //   player.request('/requests/status.json?command=in_enqueue&input=' + encodeURI(video[0].toString()), () => { });
+    // }
   }
 }
 

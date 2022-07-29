@@ -223,7 +223,7 @@ app.get('/api/rooms/ar', (req, res) => {
 app.get('/api/room/:id/phases_with_zones', (req, res) => {
     // res.send(req.params.id);
     try {
-        let sqlQuery = "SELECT id, name, image FROM phases WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name, image FROM phases WHERE status = 1 AND room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, phases) => {
             if (err) {
@@ -232,7 +232,7 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
             for (let i = 0; i < phases.length; i++) {
                 phases[i].image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + phases[i].image
 
-                let sqlQuery = "SELECT id, name FROM zones WHERE phase_id = " + phases[i].id;
+                let sqlQuery = "SELECT id, name FROM zones WHERE status = 1 AND phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
                         return res.send(apiResponseBad(err));
@@ -253,7 +253,7 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
 app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
     // res.send(req.params.id);
     try {
-        let sqlQuery = "SELECT id, name_ar as name, image_ar as image FROM phases WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name_ar as name, image_ar as image FROM phases WHERE status = 1 AND room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, phases) => {
             if (err) {
@@ -262,7 +262,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
             for (let i = 0; i < phases.length; i++) {
                 phases[i].image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + phases[i].image
 
-                let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE phase_id = " + phases[i].id;
+                let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE status = 1 AND phase_id = " + phases[i].id;
                 conn.query(sqlQuery, (err, zones) => {
                     if (err) {
                         return res.send(apiResponseBad(err));
@@ -282,7 +282,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
 
 app.get('/api/room/:id/light_scenes', (req, res) => {
     try {
-        let sqlQuery = "SELECT id, name, image_en FROM light_scenes WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name, image_en FROM light_scenes WHERE status = 1 AND room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
@@ -301,7 +301,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
 
 app.get('/api/room/:id/light_scenes/ar', (req, res) => {
     try {
-        let sqlQuery = "SELECT id, name_ar as name, image_ar as image FROM light_scenes WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name_ar as name, image_ar as image FROM light_scenes WHERE status = 1 AND room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
@@ -320,7 +320,7 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
 
 app.get('/api/room/:id/zones', (req, res) => {
     try {
-        let sqlQuery = "SELECT id, name FROM zones WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name FROM zones WHERE status = 1 AND room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
@@ -336,7 +336,7 @@ app.get('/api/room/:id/zones', (req, res) => {
 
 app.get('/api/room/:id/zones/ar', (req, res) => {
     try {
-        let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE room_id = " + req.params.id;
+        let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE status = 1 AND room_id = " + req.params.id;
 
         let query = conn.query(sqlQuery, (err, scenes) => {
             if (err) {
