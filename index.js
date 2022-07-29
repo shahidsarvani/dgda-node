@@ -738,11 +738,11 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         // LogToConsole('Projector: ' + JSON.stringify(p_video));
         // LogToConsole('Video Wall: ' + JSON.stringify(w_video));
         if (roomid == process.env.WS_ID) {
-            io.emit('change_video_wsw', w_video);
-            io.emit('change_video_wsp', p_video);
+            io.emit('change_video_zone_wsw', w_video);
+            io.emit('change_video_zone_wsp', p_video);
         } else {
-            io.emit('change_video_dw', w_video);
-            io.emit('change_video_dp', p_video);
+            io.emit('change_video_zone_dw', w_video);
+            io.emit('change_video_zone_dp', p_video);
         }
         return res.send(apiResponse(duration));
     });
