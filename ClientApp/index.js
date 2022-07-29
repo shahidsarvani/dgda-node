@@ -96,6 +96,7 @@ function play_video(video) {
 function change_video(video) {
   console.log('change video')
   console.log(video)
+  do_empty = 1
   if (!player) {
     console.log('new video')
     play_video(video)
@@ -150,6 +151,7 @@ function change_zone_video(video) {
         console.log('change empty list');
         player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
       });
+      do_empty = 0
     } else {
       console.log('enqueue video');
       player.request('/requests/status.json?command=in_enqueue&input=' + encodeURI(video[0].toString()), () => { });
