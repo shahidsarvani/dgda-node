@@ -383,6 +383,7 @@ app.get('/api/room/:id/video/resume', async (req, res) => {
     } else {
         timeInterval = setInterval(() => {
             videoPlayed++
+            console.log(videoPlayed)
         }, 1000)
         const execCommands = async () => {
             if (req.params.id !== process.env.WS_ID) {
@@ -548,29 +549,31 @@ function sendCrestCommands(results) {
     });
 }
 
-function sendModelCommands(results) {
-    var modelCommands = results.map((result) => {
-        if (result.device == process.env.MODEL_DEVICE)
-            return result.name;
-    })
-    modelCommands = modelCommands.filter(function (element) {
-        return element !== undefined;
-    });
-    LogToConsole(JSON.stringify(modelCommands));
-    var r;
-    modelCommands.forEach(async function (item, index) {
-        if (item == process.env.MODEL_UP) await sleep(results[index].model_up_delay * 1000);
-        if (item == process.env.MODEL_DOWN) await sleep(results[index].model_down_delay * 1000);
-        setTimeout(function () {
-            if (modelSocket) r = modelSocket.write(item);
-            LogToConsole(item + " sent to model with status: " + r + ", Delay: " + results[index].delay);
-        }, index * results[index].delay)
-    });
-}
+// function sendModelCommands(results) {
+//     var modelCommands = results.map((result) => {
+//         if (result.device == process.env.MODEL_DEVICE)
+//             return result.name;
+//     })
+//     modelCommands = modelCommands.filter(function (element) {
+//         return element !== undefined;
+//     });
+//     LogToConsole(JSON.stringify(modelCommands));
+//     var r;
+//     modelCommands.forEach(async function (item, index) {
+//         if (item == process.env.MODEL_UP) await sleep(results[index].model_up_delay * 1000);
+//         if (item == process.env.MODEL_DOWN) await sleep(results[index].model_down_delay * 1000);
+//         setTimeout(function () {
+//             if (modelSocket) r = modelSocket.write(item);
+//             LogToConsole(item + " sent to model with status: " + r + ", Delay: " + results[index].delay);
+//         }, index * results[index].delay)
+//     });
+// }
 
 function sendModelCommands2(id, results) {
+    clearInterval(timeInterval)
     timeInterval = setInterval(() => {
         videoPlayed++;
+        console.log(videoPlayed)
     }, 1000);
     if (!videoInterval[id]) {
         LogToConsole('videoInterval')
@@ -608,11 +611,11 @@ function sendModelCommands2(id, results) {
 
     // LogToConsole(videoInterval[id].lastPlayed)
     var playedDuration = moment().subtract(moment(videoInterval[id].lastPlayed));
-    // LogToConsole(playedDuration)
-
+    
+    LogToConsole(videoPlayed)
     var remainingModalUpDuration = videoInterval[id].modalUpDelay - videoPlayed;
     LogToConsole(remainingModalUpDuration)
-    if (remainingModalUpDuration > 0 && !videoInterval[id].isModalUpExecuted) {
+    if (remainingModalUpDuration >= 0 && !videoInterval[id].isModalUpExecuted) {
         videoInterval[id].modalUpInterval = setTimeout(function () {
             let r;
             if (modelSocket) r = modelSocket.write(process.env.MODEL_UP);
@@ -624,7 +627,7 @@ function sendModelCommands2(id, results) {
     }
 
     var remainingModalDownDuration = videoInterval[id].modalDownDelay - videoPlayed;
-    if (remainingModalDownDuration > 0 && !videoInterval[id].isModalDownExecuted) {
+    if (remainingModalDownDuration >= 0 && !videoInterval[id].isModalDownExecuted) {
         videoInterval[id].modalDownInterval = setTimeout(function () {
             let r;
             if (modelSocket) r = modelSocket.write(process.env.MODEL_DOWN);
