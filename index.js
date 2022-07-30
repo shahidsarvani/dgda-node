@@ -38,15 +38,14 @@ app.use(
 
 const conn = mysql.createConnection(dbConfig);
 
-var connected = () => conn.connect((err) => {
-    if (err) throw err;
+var mysqlConnected = () => conn.connect((err) => {
+    if (err) console.log(err);
     LogToConsole('Mysql Connected with App...');
 });
 
 conn.on('error', (err) => {
-    LogToConsole('Error connecting to the database');
-    LogToConsole(err.code + ' : ' + err.message);
-    setTimeout(connected, 3000);
+    console.log(err);
+    setTimeout(mysqlConnected, 3000);
 });
 
 crestServer.on("connection", (socket) => {
@@ -56,11 +55,23 @@ crestServer.on("connection", (socket) => {
     crestSocket.setKeepAlive(true); // to keep the status connected
 });
 
+crestServer.on('error', (err) => {
+    console.log(err);
+    crestSocket = null;
+    //setTimeout(crestConnected, 3000);
+});
+
 modelServer.on("connection", (socket) => {
     LogToConsole("Model connection details - " + socket.remoteAddress + ":" + socket.remotePort);
     modelSocket = socket;
     socket.setKeepAlive(true); // to keep the status connected
     modelSocket.setKeepAlive(true); // to keep the status connected
+});
+
+modelServer.on('error', (err) => {
+    console.log(err);
+    modelSocket = null;
+    //setTimeout(modelConnected, 3000);
 });
 
 io.on('connection', (socket) => {
@@ -72,14 +83,23 @@ io.on('connection', (socket) => {
 
     if (room_id && is_projector) {
         LogToConsole('a user connected from room: ' + room_id + ' with projector: ' + is_projector);
+        
+        try {
+            if (playDefaultScene(room_id, 'en', 0)) {
+                LogToConsole('default scene command sent successfully');
+            }
+        } catch (err) {
+            console.log(err);
+        }
+        
         let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
-                LogToConsole(JSON.stringify(err))
+                console.log(err)
             };
             var videourl = '';
             var event = '';
-            // LogToConsole(JSON.stringify(results))
+            // console.log(results)
             if (room_id == process.env.WS_ID) {
                 if (is_projector == 0) {
                     event = 'change_default_video_wsw'
@@ -128,13 +148,13 @@ io.on('connection', (socket) => {
 
     socket.on('default_video', (msg) => {
         try {
-            LogToConsole(JSON.stringify(msg));
+            console.log(msg);
             LogToConsole('show ended')
             if (playDefaultScene(msg.room_id, msg.lang, 1)) {
                 LogToConsole('default scene command sent successfully');
             }
         } catch (err) {
-            LogToConsole(JSON.stringify(err));
+            console.log(err);
         }
         
         
@@ -145,7 +165,7 @@ io.on('connection', (socket) => {
         // if (process.env.APP_ENV == 'prod') {
         //     let query = conn.query(sqlQuery, (err, results) => {
         //         if (err) {
-        //             LogToConsole(JSON.stringify(err))
+        //             console.log(err)
         //         } else {
         //             var execCommands = async () => {
         //                 await sendCrestCommands(results);
@@ -156,9 +176,9 @@ io.on('connection', (socket) => {
         // }
         // let query2 = conn.query(sqlQuery2, (err, results) => {
         //     if (err) {
-        //         LogToConsole(JSON.stringify(err))
+        //         console.log(err)
         //     };
-        //     // LogToConsole(JSON.stringify(apiResponse(results)))
+        //     // console.log(apiResponse(results))
         //     // return;
         //     var p_video = '';
         //     for (var i = 0; i < results.length; i++) {
@@ -252,7 +272,7 @@ app.get('/api/room/:id/phases_with_zones', (req, res) => {
             }, 100)
         });
     } catch (error) {
-        LogToConsole(JSON.stringify(error))
+        console.log(error)
         return res.send(apiResponseBad(error));
     }
 });
@@ -282,7 +302,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
             }, 100)
         });
     } catch (error) {
-        LogToConsole(JSON.stringify(error))
+        console.log(error)
         return res.send(apiResponseBad(error));
     }
 });
@@ -301,7 +321,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
             return res.send(apiResponse(scenes));
         });
     } catch (error) {
-        LogToConsole(JSON.stringify(error))
+        console.log(error)
         return res.send(apiResponseBad(error));
     }
 });
@@ -320,7 +340,7 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
             return res.send(apiResponse(scenes));
         });
     } catch (error) {
-        LogToConsole(JSON.stringify(error))
+        console.log(error)
         return res.send(apiResponseBad(error));
     }
 });
@@ -336,7 +356,7 @@ app.get('/api/room/:id/zones', (req, res) => {
             return res.send(apiResponse(scenes));
         });
     } catch (error) {
-        LogToConsole(JSON.stringify(error))
+        console.log(error)
         return res.send(apiResponseBad(error));
     }
 });
@@ -352,7 +372,7 @@ app.get('/api/room/:id/zones/ar', (req, res) => {
             return res.send(apiResponse(scenes));
         });
     } catch (error) {
-        LogToConsole(JSON.stringify(error))
+        console.log(error)
         return res.send(apiResponseBad(error));
     }
 });
@@ -394,7 +414,7 @@ app.get('/api/room/:id/video/resume', async (req, res) => {
             if (req.params.id !== process.env.WS_ID) {
                 // await sendModelCommands(results);
                 // videoInterval[req.params.id].lastPlayed = new Date();
-                LogToConsole(JSON.stringify(videoInterval))
+                console.log(videoInterval)
                 await sendModelCommands2(req.params.id, []);
             }
         };
@@ -429,14 +449,17 @@ app.get('/api/room/:id/video/back', (req, res) => {
 
 app.get('/api/room/:id/video/pause', (req, res) => {
     if (req.params.id !== process.env.WS_ID) {
-        clearInterval(videoInterval[req.params.id].modalUpInterval)
-        clearInterval(videoInterval[req.params.id].modalDownInterval)
-        clearInterval(timeInterval)
+        if(videoInterval && videoInterval.length > 0)
+        {
+            clearInterval(videoInterval[req.params.id].modalUpInterval)
+            clearInterval(videoInterval[req.params.id].modalDownInterval)
+            clearInterval(timeInterval)
 
-        videoInterval[req.params.id].modalUpInterval = null;
-        videoInterval[req.params.id].modalDownInterval = null;
-        videoInterval[req.params.id].lastPlayed = new Date();
-        LogToConsole(JSON.stringify(videoInterval))
+            videoInterval[req.params.id].modalUpInterval = null;
+            videoInterval[req.params.id].modalDownInterval = null;
+            videoInterval[req.params.id].lastPlayed = new Date();
+            console.log(videoInterval)
+        }
     }
 
     if (req.params.id == process.env.WS_ID) {
@@ -451,11 +474,14 @@ app.get('/api/room/:id/video/pause', (req, res) => {
 
 app.post('/api/room/:id/video/stop', (req, res) => {
     if (req.params.id !== process.env.WS_ID) {
-        clearInterval(videoInterval[req.params.id].modalUpInterval)
-        clearInterval(videoInterval[req.params.id].modalDownInterval)
-        clearInterval(timeInterval)
-        videoPlayed = 0;
-        videoInterval = {}
+        if(videoInterval && videoInterval.length > 0)
+        {
+            clearInterval(videoInterval[req.params.id].modalUpInterval)
+            clearInterval(videoInterval[req.params.id].modalDownInterval)
+            clearInterval(timeInterval)
+            videoPlayed = 0;
+            videoInterval = {}
+        }
     }
     var lang = 'en';
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
@@ -532,7 +558,7 @@ function sendCrestCommands(results) {
     crestCommands = crestCommands.filter(function (element) {
         return element !== undefined;
     });
-    LogToConsole(JSON.stringify(crestCommands));
+    console.log(crestCommands);
 
     var r;
     crestCommands.forEach(function (item, index) {
@@ -551,7 +577,7 @@ function sendCrestCommands(results) {
 //     modelCommands = modelCommands.filter(function (element) {
 //         return element !== undefined;
 //     });
-//     LogToConsole(JSON.stringify(modelCommands));
+//     console.log(modelCommands);
 //     var r;
 //     modelCommands.forEach(async function (item, index) {
 //         if (item == process.env.MODEL_UP) await sleep(results[index].model_up_delay * 1000);
@@ -564,7 +590,7 @@ function sendCrestCommands(results) {
 // }
 
 function sendModelCommands2(id, results) {
-    clearInterval(timeInterval)
+    //clearInterval(timeInterval)
     timeInterval = setInterval(() => {
         videoPlayed++;
         console.log(videoPlayed)
@@ -600,7 +626,7 @@ function sendModelCommands2(id, results) {
         });
     }
 
-    LogToConsole(JSON.stringify(videoInterval))
+    console.log(videoInterval)
 
 
     // LogToConsole(videoInterval[id].lastPlayed)
@@ -612,11 +638,15 @@ function sendModelCommands2(id, results) {
     if (remainingModalUpDuration >= 0 && !videoInterval[id].isModalUpExecuted) {
         videoInterval[id].modalUpInterval = setTimeout(function () {
             let r;
-            if (modelSocket) r = modelSocket.write(process.env.MODEL_UP);
+            if (modelSocket) {
+                r = modelSocket.write(process.env.MODEL_UP);
+            }
             else LogToConsole('Model Up');
-            videoInterval[id].isModalUpExecuted = true
-            // clearInterval(videoInterval[req.params.id].modalUpInterval)
-            LogToConsole(process.env.MODEL_UP + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalUpDelay);
+            if(videoInterval[id]) {
+                videoInterval[id].isModalUpExecuted = true
+                // clearInterval(videoInterval[req.params.id].modalUpInterval)
+                LogToConsole(process.env.MODEL_UP + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalUpDelay);
+            }
         }, remainingModalUpDuration * 1000)
     }
 
@@ -626,9 +656,12 @@ function sendModelCommands2(id, results) {
             let r;
             if (modelSocket) r = modelSocket.write(process.env.MODEL_DOWN);
             else LogToConsole('Model Down');
-            videoInterval[id].isModalDownExecuted = true
-            // clearInterval(videoInterval[req.params.id].modalDownInterval)
-            LogToConsole(process.env.MODEL_DOWN + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalDownDelay);
+            if(videoInterval[id]) {
+                videoInterval[id].isModalDownExecuted = true
+                // clearInterval(videoInterval[req.params.id].modalDownInterval)
+                LogToConsole(process.env.MODEL_DOWN + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalDownDelay);
+            }
+            videoInterval = {};
         }, remainingModalDownDuration * 1000)
     }
 }
@@ -645,13 +678,17 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         if (req.body.lang != null && req.body.lang != '')
             lang = req.body.lang;
     }
-
     let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
+    if (lang == 'ar')
+        sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay_ar AS model_up_delay, scenes.model_down_delay_ar AS model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
     let sqlQuery2 = "SELECT media.name, media.is_projector, media.duration, media.is_image FROM `media` INNER JOIN rooms ON rooms.scene_id = media.scene_id WHERE media.zone_id IS null AND media.room_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
     // return res.send(apiResponseBad(sqlQuery2))
     try {
         const [results] = await pool.query(sqlQuery);
         const [results2] = await pool.query(sqlQuery2);
+
+        LogToConsole(sqlQuery);
+        console.log(results)
 
         if (!results?.length || !results2?.length)
             return res.send(apiResponseBad(null));
@@ -713,13 +750,14 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         if (req.body.lang != null && req.body.lang != '')
             lang = req.body.lang;
     }
+    
     let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image, media.room_id FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
     // LogToConsole(sqlQuery);
     let query = conn.query(sqlQuery, (err, results) => {
         if (err) {
             return res.send(apiResponseBad(err));
         };
-        // LogToConsole(JSON.stringify(results));
+        // console.log(results);
         var p_video = '';
         var duration = 0;
         var roomid = 0;
@@ -745,8 +783,13 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
                 break;
             }
         }
-        // LogToConsole('Projector: ' + JSON.stringify(p_video));
-        // LogToConsole('Video Wall: ' + JSON.stringify(w_video));
+        if (roomid !== process.env.WS_ID) {
+            clearInterval(timeInterval)
+            videoPlayed = 0;
+            LogToConsole('Model Intervals cleared');
+        }
+        LogToConsole('Projector: ' + JSON.stringify(p_video));
+        LogToConsole('Video Wall: ' + JSON.stringify(w_video));
         if (roomid == process.env.WS_ID) {
             io.emit('change_video_zone_wsw', w_video);
             io.emit('change_video_zone_wsp', p_video);
@@ -765,11 +808,19 @@ function playDefaultScene(roomId, lang, isExecCommand) {
     if (roomId) _roomId = roomId;
     if (lang) _lang = lang;
 
+    LogToConsole((_roomId > 0 && _roomId !== process.env.WS_ID) + ':' + _roomId + ':' + _lang + ':' + isExecCommand)
+
+    if (_roomId > 0 && _roomId !== process.env.WS_ID) {
+        clearInterval(timeInterval)
+        videoPlayed = 0;
+        LogToConsole('Model Intervals cleared');
+    }
+
     if (process.env.APP_ENV == 'prod' && isExecCommand) {
         let cmdQuery = "SELECT c.name, (SELECT delay FROM settings WHERE id = 1) AS delay, h.device FROM `commands` AS c INNER JOIN hardware AS h ON h.id = c.hardware_id INNER JOIN command_scene AS cs ON cs.command_id = c.id INNER JOIN scenes AS s ON s.id = cs.scene_id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 ORDER BY cs.sort_order ASC;";
         let query = conn.query(cmdQuery, (err, results) => {
             if (err) {
-                LogToConsole(JSON.stringify(err))
+                console.log(err)
             } else {
                 var execCommands = async () => {
                     await sendCrestCommands(results);
@@ -858,7 +909,7 @@ app.get('/api/room/:id/get_play_wall_video', (req, res) => {
             return res.send(apiResponse(results));
         });
     } catch (error) {
-        LogToConsole(JSON.stringify(error))
+        console.log(error)
         return res.send(apiResponseBad(error));
     }
 });
@@ -877,7 +928,7 @@ app.get('/api/room/:id/get_play_wall_video/ar', (req, res) => {
             return res.send(apiResponse(scenes));
         });
     } catch (error) {
-        LogToConsole(JSON.stringify(error))
+        console.log(error)
         return res.send(apiResponseBad(error));
     }
 });
@@ -902,6 +953,11 @@ app.get('/api/play_wall_video/:id', (req, res) => {
                 roomid = results[i].room_id;
                 break;
             }
+        }
+        if (roomid !== process.env.WS_ID) {
+            clearInterval(timeInterval)
+            videoPlayed = 0;
+            LogToConsole('Model Intervals cleared');
         }
         // return res.send(apiResponse(roomid));
         if (roomid == process.env.WS_ID) {
@@ -929,23 +985,21 @@ app.get('/api/test', (req, res) => {
 })
 
 function apiResponse(results) {
-    // return JSON.stringify({ "status": 200, "error": null, "response": results });
     return { "status": 200, "error": null, "response": results };
 }
 
 function apiResponseBad(results) {
-    // return JSON.stringify({ "status": 200, "error": null, "response": results });
     return { "status": 500, "error": true, "response": results };
 }
 
 server.listen(process.env.APP_PORT, () => {
-    LogToConsole('App Server started on port  %j' + server.address().port);
+    LogToConsole('App Server started on port ' + server.address().port);
 });
 
 crestServer.listen(process.env.CREST_PORT, () => {
-    LogToConsole('Crestron Server started on port %j' + crestServer.address().port);
+    LogToConsole('Crestron Server started on port ' + crestServer.address().port);
 });
 
 modelServer.listen(process.env.MODEL_PORT, () => {
-    LogToConsole('Model server started on port %j' + modelServer.address().port);
+    LogToConsole('Model server started on port ' + modelServer.address().port);
 });
