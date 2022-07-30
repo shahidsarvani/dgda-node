@@ -401,24 +401,27 @@ app.get('/api/model/down', (req, res) => {
     }
 })
 
-app.get('/api/room/:id/video/resume', async (req, res) => {
+app.get('/api/room/:id/video/resume/:type', async (req, res) => {
     if (req.params.id == process.env.WS_ID) {
         io.emit('video_wsw', 'play');
         io.emit('video_wsp', 'play');
     } else {
-        timeInterval = setInterval(() => {
-            videoPlayed++
-            console.log(videoPlayed)
-        }, 1000)
-        const execCommands = async () => {
-            if (req.params.id !== process.env.WS_ID) {
-                // await sendModelCommands(results);
-                // videoInterval[req.params.id].lastPlayed = new Date();
-                console.log(videoInterval)
-                await sendModelCommands2(req.params.id, []);
-            }
-        };
-        await execCommands();
+        if(req.params.type == 1) {
+            timeInterval = setInterval(() => {
+                videoPlayed++
+                console.log(videoPlayed)
+            }, 1000)
+            
+            const execCommands = async () => {
+                if (req.params.id !== process.env.WS_ID) {
+                    // await sendModelCommands(results);
+                    // videoInterval[req.params.id].lastPlayed = new Date();
+                    console.log(videoInterval)
+                    await sendModelCommands2(req.params.id, []);
+                }
+            };
+            await execCommands();
+        }
         io.emit('video_dw', 'play');
         io.emit('video_dp', 'play');
     }
