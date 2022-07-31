@@ -477,14 +477,24 @@ app.get('/api/room/:id/video/pause', (req, res) => {
 
 app.post('/api/room/:id/video/stop', (req, res) => {
     if (req.params.id !== process.env.WS_ID) {
-        if(videoInterval && videoInterval.length > 0)
+        console.log('=================================');
+        console.log(videoInterval);
+        console.log('=================================');
+        console.log(videoInterval.length)
+        if (videoInterval && videoInterval.length > 0)
         {
-            clearInterval(videoInterval[req.params.id].modalUpInterval)
-            clearInterval(videoInterval[req.params.id].modalDownInterval)
-            clearInterval(timeInterval)
-            videoPlayed = 0;
-            videoInterval = {}
+            console.log('cleared interval');
+            if (videoInterval[req.params.id].length > 0) {
+                console.log(videoInterval[req.params.id])
+                clearInterval(videoInterval[req.params.id].modalUpInterval)
+                clearInterval(videoInterval[req.params.id].modalDownInterval)
+                clearInterval(timeInterval)
+                videoPlayed = 0;
+                videoInterval = {}
+                console.log('cleared interval');
+            }
         }
+        //console.log(videoInterval[req.params.id])
     }
     var lang = 'en';
     if (req.body.constructor === Object && Object.keys(req.body).length === 0) {
