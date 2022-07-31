@@ -480,18 +480,19 @@ app.post('/api/room/:id/video/stop', (req, res) => {
         console.log('=================================');
         console.log(videoInterval);
         console.log('=================================');
-        console.log(videoInterval.length)
-        if (videoInterval && videoInterval.length > 0)
+        console.log(Object.keys(videoInterval).length)
+        if (videoInterval && Object.keys(videoInterval).length > 0)
         {
-            console.log('cleared interval');
-            if (videoInterval[req.params.id].length > 0) {
+            console.log('cleared interval 1');
+            console.log(Object.keys(videoInterval[req.params.id]).length)
+            if (Object.keys(videoInterval[req.params.id]).length > 0) {
                 console.log(videoInterval[req.params.id])
                 clearInterval(videoInterval[req.params.id].modalUpInterval)
                 clearInterval(videoInterval[req.params.id].modalDownInterval)
                 clearInterval(timeInterval)
                 videoPlayed = 0;
                 videoInterval = {}
-                console.log('cleared interval');
+                console.log('cleared interval 2');
             }
         }
         //console.log(videoInterval[req.params.id])
