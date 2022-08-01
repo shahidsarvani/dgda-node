@@ -83,7 +83,7 @@ io.on('connection', (socket) => {
 
     if (room_id && is_projector) {
         LogToConsole('a user connected from room: ' + room_id + ' with projector: ' + is_projector);
-        
+
         try {
             if (playDefaultScene(room_id, 'en', 0)) {
                 LogToConsole('default scene command sent successfully');
@@ -91,7 +91,7 @@ io.on('connection', (socket) => {
         } catch (err) {
             console.log(err);
         }
-        
+
         let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
         let query = conn.query(sqlQuery, (err, results) => {
             if (err) {
@@ -156,8 +156,8 @@ io.on('connection', (socket) => {
         } catch (err) {
             console.log(err);
         }
-        
-        
+
+
         // let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = " + msg.room_id + " AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
         // let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg.room_id + " AND scenes.is_default = 1 AND media.lang = '" + msg.lang + "' ORDER BY media.id DESC";
         // // LogToConsole(sqlQuery2);
@@ -406,12 +406,12 @@ app.get('/api/room/:id/video/resume/:type', async (req, res) => {
         io.emit('video_wsw', 'play');
         io.emit('video_wsp', 'play');
     } else {
-        if(req.params.type == 1) {
+        if (req.params.type == 1) {
             timeInterval = setInterval(() => {
                 videoPlayed++
                 console.log(videoPlayed)
             }, 1000)
-            
+
             const execCommands = async () => {
                 if (req.params.id !== process.env.WS_ID) {
                     // await sendModelCommands(results);
@@ -452,16 +452,17 @@ app.get('/api/room/:id/video/back', (req, res) => {
 
 app.get('/api/room/:id/video/pause', (req, res) => {
     if (req.params.id !== process.env.WS_ID) {
-        if(videoInterval && videoInterval.length > 0)
-        {
-            clearInterval(videoInterval[req.params.id].modalUpInterval)
-            clearInterval(videoInterval[req.params.id].modalDownInterval)
-            clearInterval(timeInterval)
+        if (videoInterval && Object.keys(videoInterval).length > 0) {
+            if (Object.keys(videoInterval[req.params.id]).length > 0) {
+                clearInterval(videoInterval[req.params.id].modalUpInterval)
+                clearInterval(videoInterval[req.params.id].modalDownInterval)
+                clearInterval(timeInterval)
 
-            videoInterval[req.params.id].modalUpInterval = null;
-            videoInterval[req.params.id].modalDownInterval = null;
-            videoInterval[req.params.id].lastPlayed = new Date();
-            console.log(videoInterval)
+                videoInterval[req.params.id].modalUpInterval = null;
+                videoInterval[req.params.id].modalDownInterval = null;
+                videoInterval[req.params.id].lastPlayed = new Date();
+                console.log(videoInterval)
+            }
         }
     }
 
@@ -481,8 +482,7 @@ app.post('/api/room/:id/video/stop', (req, res) => {
         console.log(videoInterval);
         console.log('=================================');
         console.log(Object.keys(videoInterval).length)
-        if (videoInterval && Object.keys(videoInterval).length > 0)
-        {
+        if (videoInterval && Object.keys(videoInterval).length > 0) {
             console.log('cleared interval 1');
             console.log(Object.keys(videoInterval[req.params.id]).length)
             if (Object.keys(videoInterval[req.params.id]).length > 0) {
@@ -645,7 +645,7 @@ function sendModelCommands2(id, results) {
 
     // LogToConsole(videoInterval[id].lastPlayed)
     var playedDuration = moment().subtract(moment(videoInterval[id].lastPlayed));
-    
+
     LogToConsole(videoPlayed)
     var remainingModalUpDuration = videoInterval[id].modalUpDelay - videoPlayed;
     LogToConsole(remainingModalUpDuration)
@@ -656,7 +656,7 @@ function sendModelCommands2(id, results) {
                 r = modelSocket.write(process.env.MODEL_UP);
             }
             else LogToConsole('Model Up');
-            if(videoInterval[id]) {
+            if (videoInterval[id]) {
                 videoInterval[id].isModalUpExecuted = true
                 // clearInterval(videoInterval[req.params.id].modalUpInterval)
                 LogToConsole(process.env.MODEL_UP + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalUpDelay);
@@ -670,7 +670,7 @@ function sendModelCommands2(id, results) {
             let r;
             if (modelSocket) r = modelSocket.write(process.env.MODEL_DOWN);
             else LogToConsole('Model Down');
-            if(videoInterval[id]) {
+            if (videoInterval[id]) {
                 videoInterval[id].isModalDownExecuted = true
                 // clearInterval(videoInterval[req.params.id].modalDownInterval)
                 LogToConsole(process.env.MODEL_DOWN + " sent to model with status: " + r + ", Delay: " + videoInterval[id].modalDownDelay);
@@ -764,7 +764,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
         if (req.body.lang != null && req.body.lang != '')
             lang = req.body.lang;
     }
-    
+
     let sqlQuery = "SELECT media.name, media.is_projector, media.duration, media.is_image, media.room_id FROM `media` WHERE zone_id = " + req.params.id + " AND lang = '" + lang + "' ORDER BY media.id DESC";
     // LogToConsole(sqlQuery);
     let query = conn.query(sqlQuery, (err, results) => {
