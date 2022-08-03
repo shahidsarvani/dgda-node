@@ -209,7 +209,7 @@ io.on('connection', (socket) => {
     })
 });
 
-app.get('/api/rooms', (req, res) => {
+app.get('/api/rooms', async (req, res) => {
     let sqlQuery = "SELECT id, name, name_ar, image, image_ar, icon, icon_ar, has_model FROM rooms WHERE type = 1 AND status = 1 ORDER BY name";
 
     try {
@@ -230,7 +230,7 @@ app.get('/api/rooms', (req, res) => {
     }
 });
 
-app.get('/api/rooms/ar', (req, res) => {
+app.get('/api/rooms/ar', async (req, res) => {
     let sqlQuery = "SELECT id, name_ar as name, image_ar as image, has_model FROM rooms WHERE type = 1 AND status = 1 ORDER BY name";
 
     try {
@@ -252,31 +252,31 @@ app.get('/api/rooms/ar', (req, res) => {
     }
 });
 
-app.get('/api/room/:id/phases_with_zones', (req, res) => {
+app.get('/api/room/:id/phases_with_zones', async (req, res) => {
     // res.send(req.params.id);
     let sqlQuery = "SELECT id, name, image FROM phases WHERE status = 1 AND room_id = " + req.params.id;
 
     try {
         let [phases] = await pool.query(sqlQuery);
-        console.log(phases)
+        // console.log(phases)
 
         if (!phases?.length) return res.send(apiResponseBad(null));
 
         for (let i = 0; i < phases.length; i++) {
             phases[i].image = (process.env.APP_ENV === 'prod' ? process.env.PROD_IMG_PATH : process.env.LOCAL_IMG_PATH) + phases[i].image
-
+            // console.log(phases[i].name)
             let sqlQuery = "SELECT id, name FROM zones WHERE status = 1 AND phase_id = " + phases[i].id;
             let [zones] = await pool.query(sqlQuery)
 
             phases[i].zones = zones
         }
-        return res.send(apiResponse(results));
+        return res.send(apiResponse(phases));
     } catch (err) {
         return res.send(apiResponseBad(err));
     }
 });
 
-app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
+app.get('/api/room/:id/phases_with_zones/ar', async (req, res) => {
     // res.send(req.params.id);
     let sqlQuery = "SELECT id, name_ar as name, image_ar as image FROM phases WHERE status = 1 AND room_id = " + req.params.id;
 
@@ -300,7 +300,7 @@ app.get('/api/room/:id/phases_with_zones/ar', (req, res) => {
     }
 });
 
-app.get('/api/room/:id/light_scenes', (req, res) => {
+app.get('/api/room/:id/light_scenes', async (req, res) => {
     let sqlQuery = "SELECT id, name, image_en FROM light_scenes WHERE status = 1 AND room_id = " + req.params.id;
 
     try {
@@ -316,7 +316,7 @@ app.get('/api/room/:id/light_scenes', (req, res) => {
     }
 });
 
-app.get('/api/room/:id/light_scenes/ar', (req, res) => {
+app.get('/api/room/:id/light_scenes/ar', async (req, res) => {
     let sqlQuery = "SELECT id, name_ar as name, image_ar as image FROM light_scenes WHERE status = 1 AND room_id = " + req.params.id;
 
     try {
@@ -332,7 +332,7 @@ app.get('/api/room/:id/light_scenes/ar', (req, res) => {
     }
 });
 
-app.get('/api/room/:id/zones', (req, res) => {
+app.get('/api/room/:id/zones', async (req, res) => {
     let sqlQuery = "SELECT id, name FROM zones WHERE status = 1 AND room_id = " + req.params.id;
 
     try {
@@ -348,7 +348,7 @@ app.get('/api/room/:id/zones', (req, res) => {
     }
 });
 
-app.get('/api/room/:id/zones/ar', (req, res) => {
+app.get('/api/room/:id/zones/ar', async (req, res) => {
     let sqlQuery = "SELECT id, name_ar as name FROM zones WHERE status = 1 AND room_id = " + req.params.id;
 
     try {
@@ -534,7 +534,7 @@ app.get('/api/room/:id/volume/mute', (req, res) => {
     return res.send(apiResponse('Volume mute command is sent'));
 })
 
-app.get('/api/light_scene_command/:id', (req, res) => {
+app.get('/api/light_scene_command/:id', async (req, res) => {
     let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_light_scenes ON commands.id = command_light_scenes.command_id WHERE command_light_scenes.light_scene_id = " + req.params.id;
 
 
@@ -726,7 +726,7 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
     }
 })
 
-app.post('/api/zone/:id/play_scene', (req, res) => {
+app.post('/api/zone/:id/play_scene', async (req, res) => {
     let lang = 'en';
     if (!(req.body.constructor === Object && Object.keys(req.body).length === 0)) {
         if (req.body.lang != null && req.body.lang != '')
@@ -786,7 +786,7 @@ app.post('/api/zone/:id/play_scene', (req, res) => {
     }
 })
 
-function playDefaultScene(roomId, lang, isExecCommand) {
+async function playDefaultScene(roomId, lang, isExecCommand) {
     var _roomId = 0;
     var _lang = 'en';
     let _wsp_video = '', _wsw_video = '', _dp_video = '', _dw_video = '';
@@ -804,7 +804,24 @@ function playDefaultScene(roomId, lang, isExecCommand) {
     if (process.env.APP_ENV == 'prod' && isExecCommand) {
         let cmdQuery = "SELECT c.name, (SELECT delay FROM settings WHERE id = 1) AS delay, h.device FROM `commands` AS c INNER JOIN hardware AS h ON h.id = c.hardware_id INNER JOIN command_scene AS cs ON cs.command_id = c.id INNER JOIN scenes AS s ON s.id = cs.scene_id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 ORDER BY cs.sort_order ASC;";
         try {
-            const [results] = await pool.query(cmdQuery);
+            const [results] = function (callback) {
+                pool.getConnection(function (err, connection) {
+                    if (err) {
+                        console.log(err);
+                        callback(true);
+                        return;
+                    }
+                    connection.query(cmdQuery, [], function (err, results) {
+                        connection.release(); // always put connection back in pool after last query
+                        if (err) {
+                            console.log(err);
+                            callback(true);
+                            return;
+                        }
+                        callback(false, results);
+                    });
+                });
+            }
             console.log(results)
 
             if (!results?.length) return res.send(apiResponseBad(null));
@@ -820,7 +837,24 @@ function playDefaultScene(roomId, lang, isExecCommand) {
 
     let sqlQuery = "SELECT m.name, m.room_id, m.is_projector, m.is_image, m.duration FROM media AS m INNER JOIN scenes AS s ON m.scene_id = s.id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 AND m.lang = 'en' ORDER BY m.id DESC;";
     try {
-        const [results] = await pool.query(sqlQuery);
+        const [results] = function (callback) {
+            pool.getConnection(function (err, connection) {
+                if (err) {
+                    console.log(err);
+                    callback(true);
+                    return;
+                }
+                connection.query(cmdQuery, [], function (err, results) {
+                    connection.release(); // always put connection back in pool after last query
+                    if (err) {
+                        console.log(err);
+                        callback(true);
+                        return;
+                    }
+                    callback(false, results);
+                });
+            });
+        }
         console.log(results)
 
         if (!results?.length) return res.send(apiResponseBad(null));
@@ -857,7 +891,8 @@ function playDefaultScene(roomId, lang, isExecCommand) {
             return true;
         }
     } catch (err) {
-        return res.send(apiResponseBad(err));
+        console.log(err)
+        return false;
     }
 }
 
@@ -886,7 +921,7 @@ app.post('/api/play_default', (req, res) => {
     }
 })
 
-app.get('/api/room/:id/get_play_wall_video', (req, res) => {
+app.get('/api/room/:id/get_play_wall_video', async (req, res) => {
     let sqlQuery = "SELECT id, title_en as title FROM `wall_media` WHERE room_id = " + req.params.id;
 
     try {
@@ -899,7 +934,7 @@ app.get('/api/room/:id/get_play_wall_video', (req, res) => {
     }
 });
 
-app.get('/api/room/:id/get_play_wall_video/ar', (req, res) => {
+app.get('/api/room/:id/get_play_wall_video/ar', async (req, res) => {
     let sqlQuery = "SELECT id, title_ar as title FROM `wall_media` WHERE room_id = " + req.params.id;
 
     try {
@@ -912,7 +947,7 @@ app.get('/api/room/:id/get_play_wall_video/ar', (req, res) => {
     }
 });
 
-app.get('/api/play_wall_video/:id', (req, res) => {
+app.get('/api/play_wall_video/:id', async (req, res) => {
     let sqlQuery = "SELECT id, name, room_id, duration FROM `wall_media` WHERE id = " + req.params.id;
 
     try {
