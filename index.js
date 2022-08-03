@@ -294,7 +294,7 @@ app.get('/api/room/:id/phases_with_zones/ar', async (req, res) => {
 
             phases[i].zones = zones
         }
-        return res.send(apiResponse(results));
+        return res.send(apiResponse(phases));
     } catch (err) {
         return res.send(apiResponseBad(err));
     }
@@ -804,24 +804,7 @@ async function playDefaultScene(roomId, lang, isExecCommand) {
     if (process.env.APP_ENV == 'prod' && isExecCommand) {
         let cmdQuery = "SELECT c.name, (SELECT delay FROM settings WHERE id = 1) AS delay, h.device FROM `commands` AS c INNER JOIN hardware AS h ON h.id = c.hardware_id INNER JOIN command_scene AS cs ON cs.command_id = c.id INNER JOIN scenes AS s ON s.id = cs.scene_id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 ORDER BY cs.sort_order ASC;";
         try {
-            const [results] = function (callback) {
-                pool.getConnection(function (err, connection) {
-                    if (err) {
-                        console.log(err);
-                        callback(true);
-                        return;
-                    }
-                    connection.query(cmdQuery, [], function (err, results) {
-                        connection.release(); // always put connection back in pool after last query
-                        if (err) {
-                            console.log(err);
-                            callback(true);
-                            return;
-                        }
-                        callback(false, results);
-                    });
-                });
-            }
+            const [results] = await pool.query(cmdQuery);
             console.log(results)
 
             if (!results?.length) return res.send(apiResponseBad(null));
@@ -837,24 +820,7 @@ async function playDefaultScene(roomId, lang, isExecCommand) {
 
     let sqlQuery = "SELECT m.name, m.room_id, m.is_projector, m.is_image, m.duration FROM media AS m INNER JOIN scenes AS s ON m.scene_id = s.id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 AND m.lang = 'en' ORDER BY m.id DESC;";
     try {
-        const [results] = function (callback) {
-            pool.getConnection(function (err, connection) {
-                if (err) {
-                    console.log(err);
-                    callback(true);
-                    return;
-                }
-                connection.query(cmdQuery, [], function (err, results) {
-                    connection.release(); // always put connection back in pool after last query
-                    if (err) {
-                        console.log(err);
-                        callback(true);
-                        return;
-                    }
-                    callback(false, results);
-                });
-            });
-        }
+        const [results] = await pool.query(sqlQuery);
         console.log(results)
 
         if (!results?.length) return res.send(apiResponseBad(null));
