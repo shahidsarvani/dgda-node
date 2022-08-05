@@ -11,7 +11,7 @@ let is_muted = 0;
 // let do_empty = 1;
 
 var basePlaylistID = 3;
-var defaultVideo = '';
+// var defaultVideo = '';
 
 const socket = io(url, {
   query: {
@@ -25,8 +25,8 @@ socket.on('connect', function (socket) {
 socket.on(process.env.CHANGE_DEFAULT_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
     console.log(msg)
-    defaultVideo = msg
-    default_play_video()
+    // defaultVideo = msg
+    default_play_video(msg)
   }
 })
 socket.on(process.env.CHANGE_VIDEO_EVENT, (msg) => {
@@ -57,10 +57,10 @@ function getDefaultArgs() {
   return defaultArguments;
 }
 
-function default_play_video() {
+function default_play_video(msg) {
   console.log('default')
-  if(!player) player = new VLC(defaultVideo, getDefaultArgs());
-  else addItem(defaultVideo);
+  if(!player) player = new VLC(msg, getDefaultArgs());
+  else addItem(msg);
   
   if (process.env.IS_PROJECTOR == 0) {
     player.on('statuschange', (error, status) => {
@@ -73,7 +73,7 @@ function default_play_video() {
 }
 
 function addItem(videoName) {
-  player.request('/requests/status.json?command=in_enqueue&input=' + videoName, () => { });
+  player.request('/requests/status.json?command=in_enqueue&input=' + encodeURI(videoName), () => { });
   player.request('/requests/status.json?command=pl_delete&id=' + basePlaylistID, () => { });
   player.request('/requests/status.json?command=pl_play&id=' + (basePlaylistID++), () => { });
 }
@@ -108,7 +108,7 @@ function change_video(video) {
   } else {
     console.log('running video')
     
-    addItem(video)
+    addItem(video[0])
 
     if (process.env.IS_PROJECTOR == 0) {
       player.on('statuschange', (error, status) => {
