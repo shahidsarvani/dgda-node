@@ -720,7 +720,7 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
             io.emit('change_video_dw', w_video);
             io.emit('change_video_dp', p_video);
         }
-        return res.send(apiResponse(duration + 3));
+        return res.send(apiResponse(duration + 2));
     } catch (err) {
         return res.send(apiResponseBad(err));
     }
@@ -795,11 +795,11 @@ async function playDefaultScene(roomId, lang, isExecCommand) {
 
     LogToConsole((_roomId > 0 && _roomId !== process.env.WS_ID) + ':' + _roomId + ':' + _lang + ':' + isExecCommand)
 
-    if (_roomId > 0 && _roomId !== process.env.WS_ID) {
+    // if (_roomId > 0 && _roomId !== process.env.WS_ID) {
         clearInterval(timeInterval)
         videoPlayed = 0;
         LogToConsole('Model Intervals cleared');
-    }
+    // }
 
     if (process.env.APP_ENV == 'prod' && isExecCommand) {
         let cmdQuery = "SELECT c.name, (SELECT delay FROM settings WHERE id = 1) AS delay, h.device FROM `commands` AS c INNER JOIN hardware AS h ON h.id = c.hardware_id INNER JOIN command_scene AS cs ON cs.command_id = c.id INNER JOIN scenes AS s ON s.id = cs.scene_id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 ORDER BY cs.sort_order ASC;";
@@ -945,7 +945,7 @@ app.get('/api/play_wall_video/:id', async (req, res) => {
         } else {
             io.emit('change_video_dw', w_video);
         }
-        return res.send(apiResponse(duration + 3));
+        return res.send(apiResponse(duration + 2));
 
     } catch (err) {
         return res.send(apiResponseBad(err));
