@@ -74,6 +74,7 @@ function default_play_video(msg) {
 
 function addItem(videoName) {
   player.request('/requests/status.json?command=in_enqueue&input=' + encodeURI(videoName), () => { });
+  console.log(basePlaylistID)
   player.request('/requests/status.json?command=pl_delete&id=' + basePlaylistID, () => { });
   player.request('/requests/status.json?command=pl_play&id=' + (basePlaylistID++), () => { });
 }
