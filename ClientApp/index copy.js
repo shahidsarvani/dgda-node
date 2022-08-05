@@ -10,9 +10,6 @@ let prev_volume = 0;
 let is_muted = 0;
 // let do_empty = 1;
 
-var basePlaylistID = 3;
-var defaultVideo = '';
-
 const socket = io(url, {
   query: {
     "room_id": process.env.ROOM_ID,
@@ -25,8 +22,7 @@ socket.on('connect', function (socket) {
 socket.on(process.env.CHANGE_DEFAULT_VIDEO_EVENT, (msg) => {
   if (msg && msg.length) {
     console.log(msg)
-    defaultVideo = msg
-    default_play_video()
+    default_play_video(msg)
   }
 })
 socket.on(process.env.CHANGE_VIDEO_EVENT, (msg) => {
@@ -57,11 +53,16 @@ function getDefaultArgs() {
   return defaultArguments;
 }
 
-function default_play_video() {
+function default_play_video(video) {
   console.log('default')
-  if(!player) player = new VLC(defaultVideo, getDefaultArgs());
-  else addItem(defaultVideo);
-  
+  if (!player) {
+    player = new VLC(video.toString(), getDefaultArgs());
+  } else {
+    player.request('/requests/status.json?command=pl_empty', () => {
+      console.log('default empty list');
+      player.request('/requests/status.json?command=in_play&input=' + encodeURI(video.toString()), () => { });
+    });
+  }
   if (process.env.IS_PROJECTOR == 0) {
     player.on('statuschange', (error, status) => {
       // console.log(status)
@@ -70,12 +71,6 @@ function default_play_video() {
       }
     });
   }
-}
-
-function addItem(videoName) {
-  player.request('/requests/status.json?command=in_enqueue&input=' + videoName, () => { });
-  player.request('/requests/status.json?command=pl_delete&id=' + basePlaylistID, () => { });
-  player.request('/requests/status.json?command=pl_play&id=' + (basePlaylistID++), () => { });
 }
 
 function play_video(video) {
@@ -107,9 +102,17 @@ function change_video(video) {
     play_video(video)
   } else {
     console.log('running video')
-    
-    addItem(video)
+    // player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { 
+    //   console.log('video played')
+    //   player.request('/requests/status.json?command=command=pl_delete&id=0', () => { 
+    //     console.log('prev video deleted')
+    //   });
+    // });
 
+    player.request('/requests/status.json?command=pl_empty', () => {
+      console.log('change empty list');
+      player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
+    });
     if (process.env.IS_PROJECTOR == 0) {
       player.on('statuschange', (error, status) => {
         // console.log(status)
@@ -137,7 +140,23 @@ function change_zone_video(video) {
     play_video(video)
   } else {
     console.log('running zone video')
-    addItem(video)
+    // player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { 
+    //   console.log('video played')
+    //   player.request('/requests/status.json?command=command=pl_delete&id=0', () => { 
+    //     console.log('prev video deleted')
+    //   });
+    // });
+    // if(do_empty) {
+      player.request('/requests/status.json?command=pl_empty', () => {
+        console.log('change empty list');
+        player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
+      });
+      // do_empty = 0
+    // }
+    //  else {
+    //   console.log('enqueue video');
+    //   player.request('/requests/status.json?command=in_enqueue&input=' + encodeURI(video[0].toString()), () => { });
+    // }
   }
 }
 

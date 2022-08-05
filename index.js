@@ -91,57 +91,6 @@ io.on('connection', (socket) => {
         } catch (err) {
             console.log(err);
         }
-
-        // let sqlQuery = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + room_id + " AND scenes.is_default = 1 AND media.is_projector = " + is_projector + " ORDER BY media.id DESC";
-        // let query = conn.query(sqlQuery, (err, results) => {
-        //     if (err) {
-        //         console.log(err)
-        //     };
-        //     var videourl = '';
-        //     var event = '';
-        //     // console.log(results)
-        //     if (room_id == process.env.WS_ID) {
-        //         if (is_projector == 0) {
-        //             event = 'change_default_video_wsw'
-        //             for (var i = 0; i < results.length; i++) {
-        //                 if (!results[i].is_projector) {
-        //                     videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
-        //                     break;
-        //                 }
-        //             }
-        //         } else {
-        //             event = 'change_default_video_wsp'
-        //             for (var i = 0; i < results.length; i++) {
-        //                 if (results[i].is_projector) {
-        //                     videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //     } else {
-        //         if (is_projector == 0) {
-        //             event = 'change_default_video_dw'
-        //             for (var i = 0; i < results.length; i++) {
-        //                 if (!results[i].is_projector) {
-        //                     videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
-        //                     break;
-        //                 }
-        //             }
-        //         } else {
-        //             event = 'change_default_video_dp'
-        //             for (var i = 0; i < results.length; i++) {
-        //                 if (results[i].is_projector) {
-        //                     videourl = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
-        //                     break;
-        //                 }
-        //             }
-        //         }
-        //     }
-        //     LogToConsole(event)
-        //     LogToConsole(videourl)
-        //     io.emit(event, videourl);
-        //     LogToConsole('command is sent')
-        // });
     } else {
         LogToConsole('nope')
     }
@@ -156,56 +105,6 @@ io.on('connection', (socket) => {
         } catch (err) {
             console.log(err);
         }
-
-
-        // let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id WHERE scenes.room_id = " + msg.room_id + " AND scenes.is_default = 1 ORDER BY command_scene.sort_order ASC";
-        // let sqlQuery2 = "SELECT media.name, media.is_projector FROM `media` INNER JOIN scenes ON scenes.id = media.scene_id WHERE scenes.room_id = " + msg.room_id + " AND scenes.is_default = 1 AND media.lang = '" + msg.lang + "' ORDER BY media.id DESC";
-        // // LogToConsole(sqlQuery2);
-        // // return;
-        // if (process.env.APP_ENV == 'prod') {
-        //     let query = conn.query(sqlQuery, (err, results) => {
-        //         if (err) {
-        //             console.log(err)
-        //         } else {
-        //             var execCommands = async () => {
-        //                 await sendCrestCommands(results);
-        //             };
-        //             execCommands();
-        //         }
-        //     });
-        // }
-        // let query2 = conn.query(sqlQuery2, (err, results) => {
-        //     if (err) {
-        //         console.log(err)
-        //     };
-        //     // console.log(apiResponse(results))
-        //     // return;
-        //     var p_video = '';
-        //     for (var i = 0; i < results.length; i++) {
-        //         if (results[i].is_projector) {
-        //             p_video = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
-        //             break;
-        //         }
-        //     }
-        //     var w_video = '';
-        //     for (var i = 0; i < results.length; i++) {
-        //         if (!results[i].is_projector) {
-        //             w_video = encodeURI((process.env.APP_ENV === 'prod' ? process.env.PROD_VIDEO_PATH : process.env.LOCAL_VIDEO_PATH) + results[i].name)
-        //             break;
-        //         }
-        //     }
-
-        //     if (msg.room_id == process.env.WS_ID) {
-        //         io.emit('change_default_video_wsw', w_video);
-        //         io.emit('change_default_video_wsp', p_video);
-        //     } else {
-        //         io.emit('change_default_video_dw', w_video);
-        //         io.emit('change_default_video_dp', p_video);
-        //     }
-        //     // io.emit('change_default_video', w_video);
-        //     // io.emit('change_default_video_p', p_video);
-        //     LogToConsole('command is sent')
-        // });
     })
 });
 
