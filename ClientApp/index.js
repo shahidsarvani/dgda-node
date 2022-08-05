@@ -8,7 +8,7 @@ let player;
 let volume = 0;
 let prev_volume = 0;
 let is_muted = 0;
-// let do_empty = 1;
+let list_id = 3;
 
 const socket = io(url, {
   query: {
@@ -66,7 +66,7 @@ function default_play_video(video) {
   if (process.env.IS_PROJECTOR == 0) {
     player.on('statuschange', (error, status) => {
       // console.log(status)
-      if(status) {
+      if (status) {
         volume = status.volume
       }
     });
@@ -102,9 +102,9 @@ function change_video(video) {
     play_video(video)
   } else {
     console.log('running video')
-    player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { 
+    player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => {
       console.log('video played')
-      player.request('/requests/status.json?command=command=pl_delete&id=3', () => { 
+      player.request('/requests/status.json?command=command=pl_delete&id=' + list_id, () => {
         console.log('prev video deleted')
       });
     });
@@ -147,11 +147,11 @@ function change_zone_video(video) {
     //   });
     // });
     // if(do_empty) {
-      player.request('/requests/status.json?command=pl_empty', () => {
-        console.log('change empty list');
-        player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
-      });
-      // do_empty = 0
+    player.request('/requests/status.json?command=pl_empty', () => {
+      console.log('change empty list');
+      player.request('/requests/status.json?command=in_play&input=' + encodeURI(video[0].toString()), () => { });
+    });
+    // do_empty = 0
     // }
     //  else {
     //   console.log('enqueue video');
