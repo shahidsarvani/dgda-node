@@ -14,6 +14,7 @@ require('dotenv').config();
 var crestSocket, modelSocket;
 var dateTime = require('node-datetime');
 const moment = require("moment");
+const { env } = require('process');
 var videoInterval = {}
 var timeInterval = 0;
 var videoPlayed = 0;
@@ -48,33 +49,53 @@ conn.on('error', (err) => {
     setTimeout(mysqlConnected, 3000);
 });
 
-crestServer.on("connection", (socket) => {
+var crestConnected = () => crestServer.on("connection", (socket) => {
     LogToConsole("Crestron connection details - " + socket.remoteAddress + ":" + socket.remotePort);
     crestSocket = socket;
     socket.setKeepAlive(true); // to keep the status connected
     crestSocket.setKeepAlive(true); // to keep the status connected
+
+    socket.on("disconnect", function () {
+        LogToConsole("Crestron disconnected");
+        crestSocket = null;
+    });
+
+    socket.on("close", function () {
+        LogToConsole("Crestron disconnected");
+        crestSocket = null;
+    });
 });
 
 crestServer.on('error', (err) => {
     console.log(err);
     crestSocket = null;
-    //setTimeout(crestConnected, 3000);
+    setTimeout(crestConnected, 3000);
 });
 
-modelServer.on("connection", (socket) => {
+var modelConnected = () => modelServer.on("connection", (socket) => {
     LogToConsole("Model connection details - " + socket.remoteAddress + ":" + socket.remotePort);
     modelSocket = socket;
     socket.setKeepAlive(true); // to keep the status connected
     modelSocket.setKeepAlive(true); // to keep the status connected
+
+    socket.on("disconnect", function () {
+        LogToConsole("Model Application disconnected");
+        modelSocket = null;
+    });
+
+    socket.on("close", function () {
+        LogToConsole("Model Application disconnected");
+        modelSocket = null;
+    });
 });
 
 modelServer.on('error', (err) => {
     console.log(err);
     modelSocket = null;
-    //setTimeout(modelConnected, 3000);
+    setTimeout(modelConnected, 3000);
 });
 
-io.on('connection', (socket) => {
+var ioConnected = () => io.on('connection', (socket) => {
     socket.on('disconnect', () => {
         LogToConsole('user disconnected');
     });
@@ -97,8 +118,8 @@ io.on('connection', (socket) => {
 
     socket.on('default_video', (msg) => {
         try {
-            console.log(msg);
-            LogToConsole('show ended')
+            // console.log(msg);
+            // LogToConsole('show ended')
             if (playDefaultScene(msg.room_id, msg.lang, 1)) {
                 LogToConsole('default scene command sent successfully');
             }
@@ -106,6 +127,24 @@ io.on('connection', (socket) => {
             console.log(err);
         }
     })
+});
+
+io.on('error', (err) => {
+    console.log(err);
+    setTimeout(ioConnected, 3000);
+});
+
+mysqlConnected();
+crestConnected();
+modelConnected();
+ioConnected();
+
+process.on('uncaughtException', function (err) {
+    console.log(err);
+    setTimeout(mysqlConnected, 1000);
+    setTimeout(crestConnected, 1000);
+    setTimeout(modelConnected, 1000);
+    setTimeout(ioConnected, 1000);
 });
 
 app.get('/api/rooms', async (req, res) => {
@@ -459,7 +498,7 @@ function sendCrestCommands(results) {
     crestCommands = crestCommands.filter(function (element) {
         return element !== undefined;
     });
-    console.log(crestCommands);
+    // console.log(crestCommands);
 
     var r;
     crestCommands.forEach(function (item, index) {
@@ -474,10 +513,9 @@ function sendModelCommands2(id, results) {
     //clearInterval(timeInterval)
     timeInterval = setInterval(() => {
         videoPlayed++;
-        console.log(videoPlayed)
+        // console.log(videoPlayed)
     }, 1000);
     if (!videoInterval[id]) {
-        LogToConsole('videoInterval')
         videoInterval[id] = {
             modalUpInterval: null,
             modalDownInterval: null,
@@ -489,7 +527,6 @@ function sendModelCommands2(id, results) {
             lastPlayed: new Date(),
         }
     }
-
 
     if (results?.length) {
         let modelCommands = results.map((result) => {
@@ -507,15 +544,14 @@ function sendModelCommands2(id, results) {
         });
     }
 
-    console.log(videoInterval)
-
+    // console.log(videoInterval)
 
     // LogToConsole(videoInterval[id].lastPlayed)
     var playedDuration = moment().subtract(moment(videoInterval[id].lastPlayed));
 
-    LogToConsole(videoPlayed)
+    // LogToConsole(videoPlayed)
     var remainingModalUpDuration = videoInterval[id].modalUpDelay - videoPlayed;
-    LogToConsole(remainingModalUpDuration)
+    // LogToConsole(remainingModalUpDuration)
     if (remainingModalUpDuration >= 0 && !videoInterval[id].isModalUpExecuted) {
         videoInterval[id].modalUpInterval = setTimeout(function () {
             let r;
@@ -559,6 +595,8 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         if (req.body.lang != null && req.body.lang != '')
             lang = req.body.lang;
     }
+    if (req.params.id !== process.env.WS_ID) clearIntervals();
+
     let sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay, scenes.model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
     if (lang == 'ar')
         sqlQuery = "SELECT commands.name, (SELECT delay FROM settings WHERE id = 1) as delay, hardware.device, scenes.model_up_delay_ar AS model_up_delay, scenes.model_down_delay_ar AS model_down_delay FROM `commands` INNER JOIN hardware ON hardware.id = commands.hardware_id INNER JOIN command_scene ON command_scene.command_id = commands.id INNER JOIN scenes ON scenes.id = command_scene.scene_id INNER JOIN rooms ON rooms.scene_id = command_scene.scene_id WHERE rooms.id = " + req.params.id + " ORDER BY command_scene.sort_order ASC";
@@ -568,8 +606,8 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
         const [results] = await pool.query(sqlQuery);
         const [results2] = await pool.query(sqlQuery2);
 
-        LogToConsole(sqlQuery);
-        console.log(results)
+        // LogToConsole(sqlQuery);
+        // console.log(results)
 
         if (!results?.length || !results2?.length)
             return res.send(apiResponseBad(null));
@@ -607,15 +645,12 @@ app.post('/api/room/:id/play_scene', async (req, res) => {
             await execCommands();
         }
 
+        LogToConsole('WALL: ' + JSON.stringify(w_video))
+        LogToConsole('PROJECTOR: ' + JSON.stringify(p_video))
         if (req.params.id === process.env.WS_ID) {
-
-            LogToConsole('WALL: ' + JSON.stringify(w_video))
-            LogToConsole('PROJECTOR: ' + JSON.stringify(p_video))
             io.emit('change_video_wsw', w_video);
             io.emit('change_video_wsp', p_video);
         } else {
-            LogToConsole('WALL: ' + JSON.stringify(w_video))
-            LogToConsole('PROJECTOR: ' + JSON.stringify(p_video))
             io.emit('change_video_dw', w_video);
             io.emit('change_video_dp', p_video);
         }
@@ -636,7 +671,7 @@ app.post('/api/zone/:id/play_scene', async (req, res) => {
     // LogToConsole(sqlQuery);
     try {
         const [results] = await pool.query(sqlQuery);
-        console.log(results)
+        // console.log(results)
 
         if (!results?.length) return res.send(apiResponseBad(null));
 
@@ -666,9 +701,7 @@ app.post('/api/zone/:id/play_scene', async (req, res) => {
             }
         }
         if (roomid !== process.env.WS_ID) {
-            clearInterval(timeInterval)
-            videoPlayed = 0;
-            LogToConsole('Model Intervals cleared');
+            clearIntervals();
         }
         LogToConsole('Projector: ' + JSON.stringify(p_video));
         LogToConsole('Video Wall: ' + JSON.stringify(w_video));
@@ -685,6 +718,12 @@ app.post('/api/zone/:id/play_scene', async (req, res) => {
     }
 })
 
+function clearIntervals() {
+    clearInterval(timeInterval)
+    videoPlayed = 0;
+    // LogToConsole('Model Intervals cleared');
+}
+
 async function playDefaultScene(roomId, lang, isExecCommand) {
     var _roomId = 0;
     var _lang = 'en';
@@ -692,19 +731,17 @@ async function playDefaultScene(roomId, lang, isExecCommand) {
     if (roomId) _roomId = roomId;
     if (lang) _lang = lang;
 
-    LogToConsole((_roomId > 0 && _roomId !== process.env.WS_ID) + ':' + _roomId + ':' + _lang + ':' + isExecCommand)
+    // LogToConsole((_roomId > 0 && _roomId !== process.env.WS_ID) + ':' + _roomId + ':' + _lang + ':' + isExecCommand)
 
     // if (_roomId > 0 && _roomId !== process.env.WS_ID) {
-        clearInterval(timeInterval)
-        videoPlayed = 0;
-        LogToConsole('Model Intervals cleared');
+        clearIntervals();
     // }
 
     if (process.env.APP_ENV == 'prod' && isExecCommand) {
         let cmdQuery = "SELECT c.name, (SELECT delay FROM settings WHERE id = 1) AS delay, h.device FROM `commands` AS c INNER JOIN hardware AS h ON h.id = c.hardware_id INNER JOIN command_scene AS cs ON cs.command_id = c.id INNER JOIN scenes AS s ON s.id = cs.scene_id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 ORDER BY cs.sort_order ASC;";
         try {
             const [results] = await pool.query(cmdQuery);
-            console.log(results)
+            // console.log(results)
 
             if (!results?.length) return res.send(apiResponseBad(null));
 
@@ -720,7 +757,7 @@ async function playDefaultScene(roomId, lang, isExecCommand) {
     let sqlQuery = "SELECT m.name, m.room_id, m.is_projector, m.is_image, m.duration FROM media AS m INNER JOIN scenes AS s ON m.scene_id = s.id WHERE " + (_roomId != 0 ? "s.room_id = " + _roomId + " AND " : "") + " s.is_default = 1 AND m.lang = 'en' ORDER BY m.id DESC;";
     try {
         const [results] = await pool.query(sqlQuery);
-        console.log(results)
+        // console.log(results)
 
         if (!results?.length) return res.send(apiResponseBad(null));
         for (var i = 0; i < results.length; i++) {

@@ -138,7 +138,7 @@ function change_zone_video(video) {
     play_video(video)
   } else {
     console.log('running zone video')
-    addItem(video)
+    addItem(video[0]);
   }
 }
 
