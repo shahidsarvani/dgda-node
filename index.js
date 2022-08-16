@@ -334,14 +334,14 @@ app.get('/api/room/:id/video/resume/:type', async (req, res) => {
         if (req.params.type == 1) {
             timeInterval = setInterval(() => {
                 videoPlayed++
-                console.log(videoPlayed)
+                // console.log(videoPlayed)
             }, 1000)
 
             const execCommands = async () => {
                 if (req.params.id !== process.env.WS_ID) {
                     // await sendModelCommands(results);
                     // videoInterval[req.params.id].lastPlayed = new Date();
-                    console.log(videoInterval)
+                    // console.log(videoInterval)
                     await sendModelCommands2(req.params.id, []);
                 }
             };
